@@ -1455,10 +1455,10 @@
     </div>
 
     <script>
-        // Fixed version with working edit/delete buttons and account management
+        // Complete rewrite with fixed edit/delete and account management
         (function() {
             // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
-          const firebaseConfig = {
+         const firebaseConfig = {
   apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
   authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
   projectId: "generator-fuel-tracker-1aa43",
@@ -1476,7 +1476,7 @@
                 const auth = firebase.auth();
                 const db = firebase.firestore();
 
-                // DOM Elements - Auth
+                // DOM Elements
                 const authContainer = document.getElementById('authContainer');
                 const loginPage = document.getElementById('loginPage');
                 const registerPage = document.getElementById('registerPage');
@@ -1485,7 +1485,7 @@
                 const showRegister = document.getElementById('showRegister');
                 const showLogin = document.getElementById('showLogin');
 
-                // DOM Elements - Admin Dashboard
+                // Admin Dashboard Elements
                 const adminDashboard = document.getElementById('adminDashboard');
                 const adminAvatar = document.getElementById('adminAvatar');
                 const adminName = document.getElementById('adminName');
@@ -1516,7 +1516,7 @@
                 const noAccounts = document.getElementById('noAccounts');
                 const accountsLoading = document.getElementById('accountsLoading');
 
-                // DOM Elements - User Dashboard
+                // User Dashboard Elements
                 const userDashboard = document.getElementById('userDashboard');
                 const userAvatar = document.getElementById('userAvatar');
                 const userName = document.getElementById('userName');
