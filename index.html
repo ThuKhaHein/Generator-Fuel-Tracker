@@ -1455,11 +1455,10 @@
     </div>
 
     <script>
-        // Fix for the "Identifier 'confirmDelete' has already been declared" error
-        // Renamed conflicting variables to avoid duplicate declarations
-        
-        // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
-        const firebaseConfig = {
+        // Fixed version with working edit/delete buttons and account management
+        (function() {
+            // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
+          const firebaseConfig = {
   apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
   authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
   projectId: "generator-fuel-tracker-1aa43",
@@ -1468,1263 +1467,1282 @@
   appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
 };
 
-        // Initialize Firebase
-        try {
-            // Check if Firebase is already initialized
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-
-            // DOM Elements - Auth
-            const authContainer = document.getElementById('authContainer');
-            const loginPage = document.getElementById('loginPage');
-            const registerPage = document.getElementById('registerPage');
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            const showRegister = document.getElementById('showRegister');
-            const showLogin = document.getElementById('showLogin');
-
-            // DOM Elements - Admin Dashboard
-            const adminDashboard = document.getElementById('adminDashboard');
-            const adminAvatar = document.getElementById('adminAvatar');
-            const adminName = document.getElementById('adminName');
-            const adminEmail = document.getElementById('adminEmail');
-            const adminFuelForm = document.getElementById('adminFuelForm');
-            const adminGeneratorId = document.getElementById('adminGeneratorId');
-            const adminDate = document.getElementById('adminDate');
-            const adminStartTime = document.getElementById('adminStartTime');
-            const adminEndTime = document.getElementById('adminEndTime');
-            const adminRunningHours = document.getElementById('adminRunningHours');
-            const adminFuelAdded = document.getElementById('adminFuelAdded');
-            const adminTechnician = document.getElementById('adminTechnician');
-            const adminSidebarNav = document.querySelector('.sidebar-nav');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const adminExportExcel = document.getElementById('adminExportExcel');
-            const adminPrintPdf = document.getElementById('adminPrintPdf');
-            const adminFilterGeneratorId = document.getElementById('adminFilterGeneratorId');
-            const adminFilterDateFrom = document.getElementById('adminFilterDateFrom');
-            const adminFilterDateTo = document.getElementById('adminFilterDateTo');
-            const adminClearFilters = document.getElementById('adminClearFilters');
-            const adminTableBody = document.getElementById('adminTableBody');
-            const adminNoRecords = document.getElementById('adminNoRecords');
-            const adminTotalFuel = document.getElementById('adminTotalFuel');
-            const adminTotalHours = document.getElementById('adminTotalHours');
-            const adminAvgConsumption = document.getElementById('adminAvgConsumption');
-            const accountFilter = document.getElementById('accountFilter');
-            const accountsTableBody = document.getElementById('accountsTableBody');
-            const noAccounts = document.getElementById('noAccounts');
-
-            // DOM Elements - User Dashboard
-            const userDashboard = document.getElementById('userDashboard');
-            const userAvatar = document.getElementById('userAvatar');
-            const userName = document.getElementById('userName');
-            const userEmail = document.getElementById('userEmail');
-            const userFuelForm = document.getElementById('userFuelForm');
-            const userGeneratorId = document.getElementById('userGeneratorId');
-            const userDate = document.getElementById('userDate');
-            const userStartTime = document.getElementById('userStartTime');
-            const userEndTime = document.getElementById('userEndTime');
-            const userRunningHours = document.getElementById('userRunningHours');
-            const userFuelAdded = document.getElementById('userFuelAdded');
-            const userTechnician = document.getElementById('userTechnician');
-            const userLogoutBtn = document.getElementById('userLogoutBtn');
-
-            // Modal Elements
-            const editModal = document.getElementById('editModal');
-            const closeModal = document.getElementById('closeModal');
-            const editForm = document.getElementById('editForm');
-            const editRecordId = document.getElementById('editRecordId');
-            const editGeneratorId = document.getElementById('editGeneratorId');
-            const editDate = document.getElementById('editDate');
-            const editStartTime = document.getElementById('editStartTime');
-            const editEndTime = document.getElementById('editEndTime');
-            const editRunningHours = document.getElementById('editRunningHours');
-            const editFuelAdded = document.getElementById('editFuelAdded');
-            const editTechnician = document.getElementById('editTechnician');
-            const cancelEdit = document.getElementById('cancelEdit');
-
-            // Account Management Modal Elements
-            const editAccountModal = document.getElementById('editAccountModal');
-            const closeAccountModal = document.getElementById('closeAccountModal');
-            const editAccountForm = document.getElementById('editAccountForm');
-            const editAccountId = document.getElementById('editAccountId');
-            const editAccountUsername = document.getElementById('editAccountUsername');
-            const editAccountEmail = document.getElementById('editAccountEmail');
-            const editAccountRole = document.getElementById('editAccountRole');
-            const cancelEditAccount = document.getElementById('cancelEditAccount');
-
-            // Delete Confirmation Modal
-            const deleteConfirmModal = document.getElementById('deleteConfirmModal');
-            const closeDeleteModal = document.getElementById('closeDeleteModal');
-            const deleteUsername = document.getElementById('deleteUsername');
-            const deleteEmail = document.getElementById('deleteEmail');
-            const cancelDelete = document.getElementById('cancelDelete');
-            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn'); // Renamed from confirmDelete
-
-            // Notification Elements
-            const notification = document.getElementById('notification');
-            const notificationMessage = document.getElementById('notificationMessage');
-            const closeNotification = document.getElementById('closeNotification');
-
-            // Application state
-            let currentUser = null;
-            let currentRole = null;
-            let fuelData = [];
-            let userData = [];
-            let isOnline = navigator.onLine;
-            let currentFilteredData = [];
-            let accountToDelete = null;
-
-            // Format date for display
-            function formatDate(dateString) {
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return new Date(dateString).toLocaleDateString(undefined, options);
-            }
-
-            // Format time for display
-            function formatTime(timeString) {
-                if (!timeString) return '';
-                const [hours, minutes] = timeString.split(':');
-                return `${hours}:${minutes}`;
-            }
-
-            // Format number with commas and decimals
-            function formatNumber(num) {
-                return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionSymbols: 2 });
-            }
-
-            // Format date range for display
-            function formatDateRange() {
-                let dateRange = 'All Time';
-                
-                if (adminFilterDateFrom.value && adminFilterDateTo.value) {
-                    dateRange = `${formatDate(adminFilterDateFrom.value)} - ${formatDate(adminFilterDateTo.value)}`;
-                } else if (adminFilterDateFrom.value) {
-                    dateRange = `From ${formatDate(adminFilterDateFrom.value)}`;
-                } else if (adminFilterDateTo.value) {
-                    dateRange = `To ${formatDate(adminFilterDateTo.value)}`;
+            try {
+                // Check if Firebase is already initialized
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
                 }
                 
-                return dateRange;
-            }
+                const auth = firebase.auth();
+                const db = firebase.firestore();
 
-            // Calculate running hours from start and end times
-            function calculateRunningHours(start, end) {
-                if (!start || !end) return '';
-                
-                const startParts = start.split(':');
-                const endParts = end.split(':');
-                
-                const startDate = new Date();
-                startDate.setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0);
-                
-                const endDate = new Date();
-                endDate.setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0);
-                
-                // Handle case where end time is next day
-                if (endDate < startDate) {
-                    endDate.setDate(endDate.getDate() + 1);
+                // DOM Elements - Auth
+                const authContainer = document.getElementById('authContainer');
+                const loginPage = document.getElementById('loginPage');
+                const registerPage = document.getElementById('registerPage');
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                const showRegister = document.getElementById('showRegister');
+                const showLogin = document.getElementById('showLogin');
+
+                // DOM Elements - Admin Dashboard
+                const adminDashboard = document.getElementById('adminDashboard');
+                const adminAvatar = document.getElementById('adminAvatar');
+                const adminName = document.getElementById('adminName');
+                const adminEmail = document.getElementById('adminEmail');
+                const adminFuelForm = document.getElementById('adminFuelForm');
+                const adminGeneratorId = document.getElementById('adminGeneratorId');
+                const adminDate = document.getElementById('adminDate');
+                const adminStartTime = document.getElementById('adminStartTime');
+                const adminEndTime = document.getElementById('adminEndTime');
+                const adminRunningHours = document.getElementById('adminRunningHours');
+                const adminFuelAdded = document.getElementById('adminFuelAdded');
+                const adminTechnician = document.getElementById('adminTechnician');
+                const adminSidebarNav = document.querySelector('.sidebar-nav');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const adminExportExcel = document.getElementById('adminExportExcel');
+                const adminPrintPdf = document.getElementById('adminPrintPdf');
+                const adminFilterGeneratorId = document.getElementById('adminFilterGeneratorId');
+                const adminFilterDateFrom = document.getElementById('adminFilterDateFrom');
+                const adminFilterDateTo = document.getElementById('adminFilterDateTo');
+                const adminClearFilters = document.getElementById('adminClearFilters');
+                const adminTableBody = document.getElementById('adminTableBody');
+                const adminNoRecords = document.getElementById('adminNoRecords');
+                const adminTotalFuel = document.getElementById('adminTotalFuel');
+                const adminTotalHours = document.getElementById('adminTotalHours');
+                const adminAvgConsumption = document.getElementById('adminAvgConsumption');
+                const accountFilter = document.getElementById('accountFilter');
+                const accountsTableBody = document.getElementById('accountsTableBody');
+                const noAccounts = document.getElementById('noAccounts');
+                const accountsLoading = document.getElementById('accountsLoading');
+
+                // DOM Elements - User Dashboard
+                const userDashboard = document.getElementById('userDashboard');
+                const userAvatar = document.getElementById('userAvatar');
+                const userName = document.getElementById('userName');
+                const userEmail = document.getElementById('userEmail');
+                const userFuelForm = document.getElementById('userFuelForm');
+                const userGeneratorId = document.getElementById('userGeneratorId');
+                const userDate = document.getElementById('userDate');
+                const userStartTime = document.getElementById('userStartTime');
+                const userEndTime = document.getElementById('userEndTime');
+                const userRunningHours = document.getElementById('userRunningHours');
+                const userFuelAdded = document.getElementById('userFuelAdded');
+                const userTechnician = document.getElementById('userTechnician');
+                const userLogoutBtn = document.getElementById('userLogoutBtn');
+
+                // Modal Elements
+                const editModal = document.getElementById('editModal');
+                const closeModal = document.getElementById('closeModal');
+                const editForm = document.getElementById('editForm');
+                const editRecordId = document.getElementById('editRecordId');
+                const editGeneratorId = document.getElementById('editGeneratorId');
+                const editDate = document.getElementById('editDate');
+                const editStartTime = document.getElementById('editStartTime');
+                const editEndTime = document.getElementById('editEndTime');
+                const editRunningHours = document.getElementById('editRunningHours');
+                const editFuelAdded = document.getElementById('editFuelAdded');
+                const editTechnician = document.getElementById('editTechnician');
+                const cancelEdit = document.getElementById('cancelEdit');
+
+                // Account Management Modal Elements
+                const editAccountModal = document.getElementById('editAccountModal');
+                const closeAccountModal = document.getElementById('closeAccountModal');
+                const editAccountForm = document.getElementById('editAccountForm');
+                const editAccountId = document.getElementById('editAccountId');
+                const editAccountUsername = document.getElementById('editAccountUsername');
+                const editAccountEmail = document.getElementById('editAccountEmail');
+                const editAccountRole = document.getElementById('editAccountRole');
+                const cancelEditAccount = document.getElementById('cancelEditAccount');
+
+                // Delete Confirmation Modal
+                const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+                const closeDeleteModal = document.getElementById('closeDeleteModal');
+                const deleteUsername = document.getElementById('deleteUsername');
+                const deleteEmail = document.getElementById('deleteEmail');
+                const cancelDelete = document.getElementById('cancelDelete');
+                const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+                // Notification Elements
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+                const closeNotification = document.getElementById('closeNotification');
+
+                // Application state
+                let currentUser = null;
+                let currentRole = null;
+                let fuelData = [];
+                let userData = [];
+                let isOnline = navigator.onLine;
+                let currentFilteredData = [];
+                let accountToDelete = null;
+
+                // Format date for display
+                function formatDate(dateString) {
+                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    return new Date(dateString).toLocaleDateString(undefined, options);
                 }
-                
-                const diffMs = endDate - startDate;
-                const diffHours = diffMs / (1000 * 60 * 60);
-                
-                return diffHours.toFixed(2);
-            }
 
-            // Update running hours field
-            function updateRunningHours(startTimeEl, endTimeEl, runningHoursEl) {
-                const start = startTimeEl.value;
-                const end = endTimeEl.value;
-                
-                if (start && end) {
-                    const hours = calculateRunningHours(start, end);
-                    runningHoursEl.value = `${hours} hrs`;
-                } else {
-                    runningHoursEl.value = '';
+                // Format time for display
+                function formatTime(timeString) {
+                    if (!timeString) return '';
+                    const [hours, minutes] = timeString.split(':');
+                    return `${hours}:${minutes}`;
                 }
-            }
 
-            // Update edit form running hours
-            function updateEditRunningHours() {
-                const start = editStartTime.value;
-                const end = editEndTime.value;
-                
-                if (start && end) {
-                    const hours = calculateRunningHours(start, end);
-                    editRunningHours.value = `${hours} hrs`;
-                } else {
-                    editRunningHours.value = '';
+                // Format number with commas and decimals
+                function formatNumber(num) {
+                    return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionSymbols: 2 });
                 }
-            }
 
-            // Show notification toast
-            function showNotification(message, type = 'success') {
-                notificationMessage.textContent = message;
-                
-                // Set icon and color based on type
-                const icon = notification.querySelector('.notification-icon');
-                icon.className = 'fas fa-check-circle notification-icon';
-                
-                switch (type) {
-                    case 'success':
-                        notification.style.background = '#27ae60';
-                        icon.classList.add('success');
-                        break;
-                    case 'error':
-                        notification.style.background = '#e74c3c';
-                        icon.className = 'fas fa-exclamation-circle notification-icon error';
-                        break;
-                    case 'warning':
-                        notification.style.background = '#f39c12';
-                        icon.className = 'fas fa-exclamation-triangle notification-icon warning';
-                        break;
-                    case 'info':
-                        notification.style.background = '#3498db';
-                        icon.className = 'fas fa-info-circle notification-icon info';
-                        break;
-                }
-                
-                // Show notification
-                notification.classList.add('show');
-                
-                // Auto-hide after 5 seconds
-                setTimeout(hideNotification, 5000);
-            }
-
-            // Hide notification toast
-            function hideNotification() {
-                notification.classList.remove('show');
-            }
-
-            // Show/hide auth pages
-            function showAuthPage(page) {
-                loginPage.classList.remove('active');
-                registerPage.classList.remove('active');
-                document.getElementById(page).classList.add('active');
-            }
-
-            // Show/hide dashboard based on role
-            function showDashboard(role) {
-                authContainer.style.display = 'none';
-                adminDashboard.style.display = 'none';
-                userDashboard.style.display = 'none';
-                
-                if (role === 'admin') {
-                    adminDashboard.style.display = 'block';
-                } else {
-                    userDashboard.style.display = 'block';
-                }
-            }
-
-            // Set user avatar (using first letter of username)
-            function setUserAvatar(avatarElement, name) {
-                avatarElement.textContent = name ? name.charAt(0).toUpperCase() : 'U';
-            }
-
-            // Save user data to Firestore
-            async function saveUserData(user, role) {
-                try {
-                    await db.collection('users').doc(user.uid).set({
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName,
-                        role: role,
-                        createdAt: new Date().toISOString()
-                    });
-                    console.log('User data saved to Firestore');
-                } catch (error) {
-                    console.error('Error saving user ', error);
-                    throw error;
-                }
-            }
-
-            // Load user data from Firestore
-            async function loadUserData(uid) {
-                try {
-                    const doc = await db.collection('users').doc(uid).get();
-                    if (doc.exists) {
-                        return doc.data();
+                // Format date range for display
+                function formatDateRange() {
+                    let dateRange = 'All Time';
+                    
+                    if (adminFilterDateFrom.value && adminFilterDateTo.value) {
+                        dateRange = `${formatDate(adminFilterDateFrom.value)} - ${formatDate(adminFilterDateTo.value)}`;
+                    } else if (adminFilterDateFrom.value) {
+                        dateRange = `From ${formatDate(adminFilterDateFrom.value)}`;
+                    } else if (adminFilterDateTo.value) {
+                        dateRange = `To ${formatDate(adminFilterDateTo.value)}`;
                     }
-                    return null;
-                } catch (error) {
-                    console.error('Error loading user ', error);
-                    return null;
-                }
-            }
-
-            // Load all user data for admin
-            async function loadAllUserData() {
-                try {
-                    const snapshot = await db.collection('users').get();
-                    userData = [];
                     
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        userData.push({
-                            id: doc.id,
-                            uid: data.uid,
-                            displayName: data.displayName,
-                            email: data.email,
-                            role: data.role,
-                            createdAt: data.createdAt
-                        });
-                    });
-                    
-                    applyAccountFilters();
-                } catch (error) {
-                    console.error('Error loading user ', error);
-                    showNotification('Error loading user data', 'error');
+                    return dateRange;
                 }
-            }
 
-            // Save data to Firestore
-            async function saveToFirestore(record) {
-                try {
-                    await db.collection('fuelRecords').add(record);
-                    console.log('Record saved to Firestore');
-                } catch (error) {
-                    console.error('Error saving to Firestore:', error);
-                    throw error;
-                }
-            }
-
-            // Update data in Firestore
-            async function updateFirestore(id, record) {
-                try {
-                    await db.collection('fuelRecords').doc(id).update(record);
-                    console.log('Record updated in Firestore');
-                } catch (error) {
-                    console.error('Error updating Firestore:', error);
-                    throw error;
-                }
-            }
-
-            // Delete data from Firestore
-            async function deleteFromFirestore(id) {
-                try {
-                    await db.collection('fuelRecords').doc(id).delete();
-                    console.log('Record deleted from Firestore');
-                } catch (error) {
-                    console.error('Error deleting from Firestore:', error);
-                    throw error;
-                }
-            }
-
-            // Load fuel data from Firestore
-            async function loadFuelData() {
-                try {
-                    const snapshot = await db.collection('fuelRecords').get();
-                    fuelData = [];
+                // Calculate running hours from start and end times
+                function calculateRunningHours(start, end) {
+                    if (!start || !end) return '';
                     
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        fuelData.push({
-                            id: doc.id,
-                            generatorId: data.generatorId,
-                            date: data.date,
-                            startTime: data.startTime,
-                            endTime: data.endTime,
-                            runningHours: data.runningHours,
-                            fuelAdded: data.fuelAdded,
-                            technician: data.technician,
-                            timestamp: data.timestamp
-                        });
-                    });
+                    const startParts = start.split(':');
+                    const endParts = end.split(':');
                     
-                    isOnline = true;
-                    applyFilters();
-                } catch (error) {
-                    console.error('Error loading fuel ', error);
-                    isOnline = false;
+                    const startDate = new Date();
+                    startDate.setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0);
                     
-                    // Try to load from localStorage as fallback
-                    const cachedData = JSON.parse(localStorage.getItem('fuelData')) || [];
-                    if (cachedData.length > 0) {
-                        fuelData = cachedData;
-                        applyFilters();
-                        showNotification('Loaded data from cache (offline mode)', 'warning');
+                    const endDate = new Date();
+                    endDate.setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0);
+                    
+                    // Handle case where end time is next day
+                    if (endDate < startDate) {
+                        endDate.setDate(endDate.getDate() + 1);
+                    }
+                    
+                    const diffMs = endDate - startDate;
+                    const diffHours = diffMs / (1000 * 60 * 60);
+                    
+                    return diffHours.toFixed(2);
+                }
+
+                // Update running hours field
+                function updateRunningHours(startTimeEl, endTimeEl, runningHoursEl) {
+                    const start = startTimeEl.value;
+                    const end = endTimeEl.value;
+                    
+                    if (start && end) {
+                        const hours = calculateRunningHours(start, end);
+                        runningHoursEl.value = `${hours} hrs`;
                     } else {
-                        showNotification('No data available', 'info');
+                        runningHoursEl.value = '';
                     }
                 }
-            }
 
-            // Update dashboard statistics based on filtered data
-            function updateDashboard(filteredData) {
-                if (!filteredData || filteredData.length === 0) {
-                    adminTotalFuel.textContent = '0 L';
-                    adminTotalHours.textContent = '0 hrs';
-                    adminAvgConsumption.textContent = '0 L/hr';
-                    return;
+                // Update edit form running hours
+                function updateEditRunningHours() {
+                    const start = editStartTime.value;
+                    const end = editEndTime.value;
+                    
+                    if (start && end) {
+                        const hours = calculateRunningHours(start, end);
+                        editRunningHours.value = `${hours} hrs`;
+                    } else {
+                        editRunningHours.value = '';
+                    }
                 }
 
-                const totalFuelLiters = filteredData.reduce((sum, record) => sum + parseFloat(record.fuelAdded), 0);
-                const totalRunningHours = filteredData.reduce((sum, record) => sum + parseFloat(record.runningHours), 0);
-                const avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
-
-                adminTotalFuel.textContent = `${formatNumber(totalFuelLiters)} L`;
-                adminTotalHours.textContent = `${formatNumber(totalRunningHours)} hrs`;
-                adminAvgConsumption.textContent = `${formatNumber(avgConsumptionRate)} L/hr`;
-            }
-
-            // Apply filters and render table
-            function applyFilters() {
-                currentFilteredData = getFilteredData();
-                
-                // Update dashboard with filtered data
-                updateDashboard(currentFilteredData);
-                
-                // Clear existing rows
-                adminTableBody.innerHTML = '';
-                
-                if (currentFilteredData.length === 0) {
-                    adminNoRecords.style.display = 'block';
-                    return;
-                }
-                
-                adminNoRecords.style.display = 'none';
-                
-                // Add rows for each record
-                currentFilteredData.forEach(record => {
-                    const consumption = record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00';
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${record.generatorId}</td>
-                        <td>${formatDate(record.date)}</td>
-                        <td>${formatNumber(record.fuelAdded)} L</td>
-                        <td>${record.runningHours} hrs</td>
-                        <td>${consumption} L/hr</td>
-                        <td>${record.technician}</td>
-                        <td class="action-buttons">
-                            <button class="action-btn action-btn-edit" data-id="${record.id}">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="action-btn action-btn-delete" data-id="${record.id}">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </td>
-                    `;
-                    adminTableBody.appendChild(row);
-                });
-                
-                // Add event listeners to action buttons
-                document.querySelectorAll('.action-btn-edit').forEach(btn => {
-                    btn.addEventListener('click', openEditModal);
-                });
-                
-                document.querySelectorAll('.action-btn-delete').forEach(btn => {
-                    btn.addEventListener('click', confirmDelete);
-                });
-            }
-
-            // Get filtered data based on current filter values
-            function getFilteredData() {
-                return fuelData.filter(record => {
-                    // Filter by Generator ID
-                    if (adminFilterGeneratorId.value && !record.generatorId.toLowerCase().includes(adminFilterGeneratorId.value.toLowerCase())) {
-                        return false;
+                // Show notification toast
+                function showNotification(message, type = 'success') {
+                    notificationMessage.textContent = message;
+                    
+                    // Set icon and color based on type
+                    const icon = notification.querySelector('.notification-icon');
+                    icon.className = 'fas fa-check-circle notification-icon';
+                    
+                    switch (type) {
+                        case 'success':
+                            notification.style.background = '#27ae60';
+                            icon.classList.add('success');
+                            break;
+                        case 'error':
+                            notification.style.background = '#e74c3c';
+                            icon.className = 'fas fa-exclamation-circle notification-icon error';
+                            break;
+                        case 'warning':
+                            notification.style.background = '#f39c12';
+                            icon.className = 'fas fa-exclamation-triangle notification-icon warning';
+                            break;
+                        case 'info':
+                            notification.style.background = '#3498db';
+                            icon.className = 'fas fa-info-circle notification-icon info';
+                            break;
                     }
                     
-                    // Filter by date range - from date
-                    if (adminFilterDateFrom.value) {
-                        const recordDate = new Date(record.date);
-                        const fromDate = new Date(adminFilterDateFrom.value);
-                        if (recordDate < fromDate) {
-                            return false;
+                    // Show notification
+                    notification.classList.add('show');
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(hideNotification, 5000);
+                }
+
+                // Hide notification toast
+                function hideNotification() {
+                    notification.classList.remove('show');
+                }
+
+                // Show/hide auth pages
+                function showAuthPage(page) {
+                    loginPage.classList.remove('active');
+                    registerPage.classList.remove('active');
+                    document.getElementById(page).classList.add('active');
+                }
+
+                // Show/hide dashboard based on role
+                function showDashboard(role) {
+                    authContainer.style.display = 'none';
+                    adminDashboard.style.display = 'none';
+                    userDashboard.style.display = 'none';
+                    
+                    if (role === 'admin') {
+                        adminDashboard.style.display = 'block';
+                    } else {
+                        userDashboard.style.display = 'block';
+                    }
+                }
+
+                // Set user avatar (using first letter of username)
+                function setUserAvatar(avatarElement, name) {
+                    avatarElement.textContent = name ? name.charAt(0).toUpperCase() : 'U';
+                }
+
+                // Save user data to Firestore
+                async function saveUserData(user, role) {
+                    try {
+                        await db.collection('users').doc(user.uid).set({
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName,
+                            role: role,
+                            createdAt: new Date().toISOString()
+                        });
+                        console.log('User data saved to Firestore');
+                    } catch (error) {
+                        console.error('Error saving user ', error);
+                        throw error;
+                    }
+                }
+
+                // Load user data from Firestore
+                async function loadUserData(uid) {
+                    try {
+                        const doc = await db.collection('users').doc(uid).get();
+                        if (doc.exists) {
+                            return doc.data();
+                        }
+                        return null;
+                    } catch (error) {
+                        console.error('Error loading user ', error);
+                        return null;
+                    }
+                }
+
+                // Load all user data for admin
+                async function loadAllUserData() {
+                    try {
+                        accountsLoading.style.display = 'block';
+                        const snapshot = await db.collection('users').get();
+                        userData = [];
+                        
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            userData.push({
+                                id: doc.id,
+                                uid: data.uid,
+                                displayName: data.displayName,
+                                email: data.email,
+                                role: data.role,
+                                createdAt: data.createdAt
+                            });
+                        });
+                        
+                        accountsLoading.style.display = 'none';
+                        applyAccountFilters();
+                    } catch (error) {
+                        console.error('Error loading user ', error);
+                        accountsLoading.style.display = 'none';
+                        showNotification('Error loading user data', 'error');
+                    }
+                }
+
+                // Save data to Firestore
+                async function saveToFirestore(record) {
+                    try {
+                        await db.collection('fuelRecords').add(record);
+                        console.log('Record saved to Firestore');
+                    } catch (error) {
+                        console.error('Error saving to Firestore:', error);
+                        throw error;
+                    }
+                }
+
+                // Update data in Firestore
+                async function updateFirestore(id, record) {
+                    try {
+                        await db.collection('fuelRecords').doc(id).update(record);
+                        console.log('Record updated in Firestore');
+                    } catch (error) {
+                        console.error('Error updating Firestore:', error);
+                        throw error;
+                    }
+                }
+
+                // Delete data from Firestore
+                async function deleteFromFirestore(id) {
+                    try {
+                        await db.collection('fuelRecords').doc(id).delete();
+                        console.log('Record deleted from Firestore');
+                    } catch (error) {
+                        console.error('Error deleting from Firestore:', error);
+                        throw error;
+                    }
+                }
+
+                // Load fuel data from Firestore
+                async function loadFuelData() {
+                    try {
+                        adminLoading.style.display = 'block';
+                        const snapshot = await db.collection('fuelRecords').get();
+                        fuelData = [];
+                        
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            fuelData.push({
+                                id: doc.id,
+                                generatorId: data.generatorId,
+                                date: data.date,
+                                startTime: data.startTime,
+                                endTime: data.endTime,
+                                runningHours: data.runningHours,
+                                fuelAdded: data.fuelAdded,
+                                technician: data.technician,
+                                timestamp: data.timestamp
+                            });
+                        });
+                        
+                        adminLoading.style.display = 'none';
+                        isOnline = true;
+                        applyFilters();
+                    } catch (error) {
+                        console.error('Error loading fuel ', error);
+                        adminLoading.style.display = 'none';
+                        isOnline = false;
+                        
+                        // Try to load from localStorage as fallback
+                        const cachedData = JSON.parse(localStorage.getItem('fuelData')) || [];
+                        if (cachedData.length > 0) {
+                            fuelData = cachedData;
+                            applyFilters();
+                            showNotification('Loaded data from cache (offline mode)', 'warning');
+                        } else {
+                            showNotification('No data available', 'info');
                         }
                     }
+                }
+
+                // Update dashboard statistics based on filtered data
+                function updateDashboard(filteredData) {
+                    if (!filteredData || filteredData.length === 0) {
+                        adminTotalFuel.textContent = '0 L';
+                        adminTotalHours.textContent = '0 hrs';
+                        adminAvgConsumption.textContent = '0 L/hr';
+                        return;
+                    }
+
+                    const totalFuelLiters = filteredData.reduce((sum, record) => sum + parseFloat(record.fuelAdded), 0);
+                    const totalRunningHours = filteredData.reduce((sum, record) => sum + parseFloat(record.runningHours), 0);
+                    const avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
+
+                    adminTotalFuel.textContent = `${formatNumber(totalFuelLiters)} L`;
+                    adminTotalHours.textContent = `${formatNumber(totalRunningHours)} hrs`;
+                    adminAvgConsumption.textContent = `${formatNumber(avgConsumptionRate)} L/hr`;
+                }
+
+                // Apply filters and render table
+                function applyFilters() {
+                    currentFilteredData = getFilteredData();
                     
-                    // Filter by date range - to date
-                    if (adminFilterDateTo.value) {
-                        const recordDate = new Date(record.date);
-                        const toDate = new Date(adminFilterDateTo.value);
-                        // Set time to end of day for "to" date
-                        toDate.setHours(23, 59, 59, 999);
-                        if (recordDate > toDate) {
-                            return false;
-                        }
+                    // Update dashboard with filtered data
+                    updateDashboard(currentFilteredData);
+                    
+                    // Clear existing rows
+                    adminTableBody.innerHTML = '';
+                    
+                    if (currentFilteredData.length === 0) {
+                        adminNoRecords.style.display = 'block';
+                        return;
                     }
                     
-                    return true;
-                });
-            }
-
-            // Apply account filters
-            function applyAccountFilters() {
-                const filteredUsers = userData.filter(user => {
-                    if (!accountFilter.value) return true;
+                    adminNoRecords.style.display = 'none';
                     
-                    const searchValue = accountFilter.value.toLowerCase();
-                    return user.displayName.toLowerCase().includes(searchValue) || 
-                           user.email.toLowerCase().includes(searchValue);
-                });
-                
-                // Clear existing rows
-                accountsTableBody.innerHTML = '';
-                
-                if (filteredUsers.length === 0) {
-                    noAccounts.style.display = 'block';
-                    return;
+                    // Add rows for each record
+                    currentFilteredData.forEach(record => {
+                        const consumption = record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00';
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${record.generatorId}</td>
+                            <td>${formatDate(record.date)}</td>
+                            <td>${formatNumber(record.fuelAdded)} L</td>
+                            <td>${record.runningHours} hrs</td>
+                            <td>${consumption} L/hr</td>
+                            <td>${record.technician}</td>
+                            <td class="action-buttons">
+                                <button class="action-btn action-btn-edit" data-id="${record.id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="action-btn action-btn-delete" data-id="${record.id}">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        `;
+                        adminTableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to action buttons
+                    document.querySelectorAll('.action-btn-edit').forEach(btn => {
+                        btn.addEventListener('click', openEditModal);
+                    });
+                    
+                    document.querySelectorAll('.action-btn-delete').forEach(btn => {
+                        btn.addEventListener('click', confirmDeleteRecord);
+                    });
                 }
-                
-                noAccounts.style.display = 'none';
-                
-                // Add rows for each user
-                filteredUsers.forEach(user => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${user.displayName}</td>
-                        <td>${user.email}</td>
-                        <td>${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</td>
-                        <td>${formatDate(user.createdAt)}</td>
-                        <td class="action-buttons">
-                            <button class="action-btn action-btn-edit" data-id="${user.id}" data-type="account">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="action-btn action-btn-delete" data-id="${user.id}" data-type="account">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </td>
-                    `;
-                    accountsTableBody.appendChild(row);
-                });
-                
-                // Add event listeners to action buttons
-                document.querySelectorAll('.action-btn-edit[data-type="account"]').forEach(btn => {
-                    btn.addEventListener('click', openEditAccountModal);
-                });
-                
-                document.querySelectorAll('.action-btn-delete[data-type="account"]').forEach(btn => {
-                    btn.addEventListener('click', openDeleteConfirmation);
-                });
-            }
 
-            // Handle login
-            loginForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                
-                try {
-                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                    const user = userCredential.user;
+                // Get filtered data based on current filter values
+                function getFilteredData() {
+                    return fuelData.filter(record => {
+                        // Filter by Generator ID
+                        if (adminFilterGeneratorId.value && !record.generatorId.toLowerCase().includes(adminFilterGeneratorId.value.toLowerCase())) {
+                            return false;
+                        }
+                        
+                        // Filter by date range - from date
+                        if (adminFilterDateFrom.value) {
+                            const recordDate = new Date(record.date);
+                            const fromDate = new Date(adminFilterDateFrom.value);
+                            if (recordDate < fromDate) {
+                                return false;
+                            }
+                        }
+                        
+                        // Filter by date range - to date
+                        if (adminFilterDateTo.value) {
+                            const recordDate = new Date(record.date);
+                            const toDate = new Date(adminFilterDateTo.value);
+                            // Set time to end of day for "to" date
+                            toDate.setHours(23, 59, 59, 999);
+                            if (recordDate > toDate) {
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    });
+                }
+
+                // Apply account filters
+                function applyAccountFilters() {
+                    const filteredUsers = userData.filter(user => {
+                        if (!accountFilter.value) return true;
+                        
+                        const searchValue = accountFilter.value.toLowerCase();
+                        return user.displayName.toLowerCase().includes(searchValue) || 
+                               user.email.toLowerCase().includes(searchValue);
+                    });
                     
-                    // Load user data
-                    const userData = await loadUserData(user.uid);
-                    if (userData) {
-                        currentUser = user;
-                        currentRole = userData.role;
+                    // Clear existing rows
+                    accountsTableBody.innerHTML = '';
+                    
+                    if (filteredUsers.length === 0) {
+                        noAccounts.style.display = 'block';
+                        return;
+                    }
+                    
+                    noAccounts.style.display = 'none';
+                    
+                    // Add rows for each user
+                    filteredUsers.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.displayName}</td>
+                            <td>${user.email}</td>
+                            <td>${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</td>
+                            <td>${formatDate(user.createdAt)}</td>
+                            <td class="action-buttons">
+                                <button class="action-btn action-btn-edit" data-id="${user.id}" data-type="account">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="action-btn action-btn-delete" data-id="${user.id}" data-type="account">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        `;
+                        accountsTableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to action buttons
+                    document.querySelectorAll('.action-btn-edit[data-type="account"]').forEach(btn => {
+                        btn.addEventListener('click', openEditAccountModal);
+                    });
+                    
+                    document.querySelectorAll('.action-btn-delete[data-type="account"]').forEach(btn => {
+                        btn.addEventListener('click', openDeleteConfirmation);
+                    });
+                }
+
+                // Handle login
+                loginForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('loginEmail').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    try {
+                        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // Load user data
+                        const userData = await loadUserData(user.uid);
+                        if (userData) {
+                            currentUser = user;
+                            currentRole = userData.role;
+                            
+                            // Update UI
+                            if (currentRole === 'admin') {
+                                adminName.textContent = userData.displayName || userData.email;
+                                adminEmail.textContent = userData.email;
+                                setUserAvatar(adminAvatar, userData.displayName || userData.email);
+                                showDashboard('admin');
+                                loadFuelData();
+                                loadAllUserData();
+                            } else {
+                                userName.textContent = userData.displayName || userData.email;
+                                userEmail.textContent = userData.email;
+                                setUserAvatar(userAvatar, userData.displayName || userData.email);
+                                showDashboard('user');
+                            }
+                            
+                            showNotification('Logged in successfully!', 'success');
+                        } else {
+                            showNotification('User data not found. Please contact administrator.', 'error');
+                            await auth.signOut();
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        showNotification(error.message, 'error');
+                    }
+                });
+
+                // Handle registration
+                registerForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('registerUsername').value.trim();
+                    const email = document.getElementById('registerEmail').value.trim();
+                    const password = document.getElementById('registerPassword').value;
+                    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                    const role = document.getElementById('registerRole').value;
+                    
+                    // Validate inputs
+                    if (!username || !email || !password || !confirmPassword || !role) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showNotification('Passwords do not match.', 'error');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showNotification('Password must be at least 6 characters long.', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Create user
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // Update user profile
+                        await user.updateProfile({
+                            displayName: username
+                        });
+                        
+                        // Save user data to Firestore
+                        await saveUserData(user, role);
                         
                         // Update UI
+                        currentUser = user;
+                        currentRole = role;
+                        
                         if (currentRole === 'admin') {
-                            adminName.textContent = userData.displayName || userData.email;
-                            adminEmail.textContent = userData.email;
-                            setUserAvatar(adminAvatar, userData.displayName || userData.email);
+                            adminName.textContent = username;
+                            adminEmail.textContent = email;
+                            setUserAvatar(adminAvatar, username);
                             showDashboard('admin');
-                            loadFuelData();
                             loadAllUserData();
                         } else {
-                            userName.textContent = userData.displayName || userData.email;
-                            userEmail.textContent = userData.email;
-                            setUserAvatar(userAvatar, userData.displayName || userData.email);
+                            userName.textContent = username;
+                            userEmail.textContent = email;
+                            setUserAvatar(userAvatar, username);
                             showDashboard('user');
                         }
                         
-                        showNotification('Logged in successfully!', 'success');
-                    } else {
-                        showNotification('User data not found. Please contact administrator.', 'error');
-                        await auth.signOut();
+                        showNotification('Registration successful! Welcome!', 'success');
+                    } catch (error) {
+                        console.error('Registration error:', error);
+                        showNotification(error.message, 'error');
                     }
-                } catch (error) {
-                    console.error('Login error:', error);
-                    showNotification(error.message, 'error');
-                }
-            });
-
-            // Handle registration
-            registerForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const username = document.getElementById('registerUsername').value.trim();
-                const email = document.getElementById('registerEmail').value.trim();
-                const password = document.getElementById('registerPassword').value;
-                const confirmPassword = document.getElementById('registerConfirmPassword').value;
-                const role = document.getElementById('registerRole').value;
-                
-                // Validate inputs
-                if (!username || !email || !password || !confirmPassword || !role) {
-                    showNotification('Please fill in all required fields.', 'error');
-                    return;
-                }
-                
-                if (password !== confirmPassword) {
-                    showNotification('Passwords do not match.', 'error');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    showNotification('Password must be at least 6 characters long.', 'error');
-                    return;
-                }
-                
-                try {
-                    // Create user
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    const user = userCredential.user;
-                    
-                    // Update user profile
-                    await user.updateProfile({
-                        displayName: username
-                    });
-                    
-                    // Save user data to Firestore
-                    await saveUserData(user, role);
-                    
-                    // Update UI
-                    currentUser = user;
-                    currentRole = role;
-                    
-                    if (currentRole === 'admin') {
-                        adminName.textContent = username;
-                        adminEmail.textContent = email;
-                        setUserAvatar(adminAvatar, username);
-                        showDashboard('admin');
-                        loadAllUserData();
-                    } else {
-                        userName.textContent = username;
-                        userEmail.textContent = email;
-                        setUserAvatar(userAvatar, username);
-                        showDashboard('user');
-                    }
-                    
-                    showNotification('Registration successful! Welcome!', 'success');
-                } catch (error) {
-                    console.error('Registration error:', error);
-                    showNotification(error.message, 'error');
-                }
-            });
-
-            // Show register page
-            showRegister.addEventListener('click', function(e) {
-                e.preventDefault();
-                showAuthPage('registerPage');
-            });
-
-            // Show login page
-            showLogin.addEventListener('click', function(e) {
-                e.preventDefault();
-                showAuthPage('loginPage');
-            });
-
-            // Admin fuel form submission
-            adminFuelForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const genId = adminGeneratorId.value.trim();
-                const recordDate = adminDate.value;
-                const start = adminStartTime.value;
-                const end = adminEndTime.value;
-                const fuel = parseFloat(adminFuelAdded.value);
-                const tech = adminTechnician.value.trim();
-                
-                // Validate times
-                if (start && end && new Date(`1970-01-01T${end}`) < new Date(`1970-01-01T${start}`)) {
-                    showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
-                    return;
-                }
-                
-                // Validate required fields
-                if (!genId || !recordDate || !start || !end || !fuel || !tech) {
-                    showNotification('Please fill in all required fields.', 'error');
-                    return;
-                }
-                
-                // Calculate running hours
-                const runningHrs = calculateRunningHours(start, end);
-                
-                // Create new record
-                const newRecord = {
-                    generatorId: genId,
-                    date: recordDate,
-                    startTime: start,
-                    endTime: end,
-                    runningHours: parseFloat(runningHrs),
-                    fuelAdded: fuel,
-                    technician: tech,
-                    timestamp: new Date().toISOString(),
-                    createdBy: currentUser.uid
-                };
-                
-                try {
-                    await saveToFirestore(newRecord);
-                    
-                    // Add to local data
-                    fuelData.push({ ...newRecord, id: Date.now().toString() });
-                    
-                    // Update localStorage cache
-                    localStorage.setItem('fuelData', JSON.stringify(fuelData));
-                    
-                    // Show success notification
-                    showNotification('Fuel record saved successfully!', 'success');
-                    
-                    // Reset form
-                    adminFuelForm.reset();
-                    adminRunningHours.value = '';
-                    
-                    // Refresh data
-                    loadFuelData();
-                    
-                } catch (error) {
-                    console.error('Error saving record:', error);
-                    showNotification('Failed to save record. Please try again.', 'error');
-                }
-            });
-
-            // User fuel form submission
-            userFuelForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const genId = userGeneratorId.value.trim();
-                const recordDate = userDate.value;
-                const start = userStartTime.value;
-                const end = userEndTime.value;
-                const fuel = parseFloat(userFuelAdded.value);
-                const tech = userTechnician.value.trim();
-                
-                // Validate times
-                if (start && end && new Date(`1970-01-01T${end}`) < new Date(`1970-01-01T${start}`)) {
-                    showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
-                    return;
-                }
-                
-                // Validate required fields
-                if (!genId || !recordDate || !start || !end || !fuel || !tech) {
-                    showNotification('Please fill in all required fields.', 'error');
-                    return;
-                }
-                
-                // Calculate running hours
-                const runningHrs = calculateRunningHours(start, end);
-                
-                // Create new record
-                const newRecord = {
-                    generatorId: genId,
-                    date: recordDate,
-                    startTime: start,
-                    endTime: end,
-                    runningHours: parseFloat(runningHrs),
-                    fuelAdded: fuel,
-                    technician: tech,
-                    timestamp: new Date().toISOString(),
-                    createdBy: currentUser.uid
-                };
-                
-                try {
-                    await saveToFirestore(newRecord);
-                    
-                    // Add to local data
-                    fuelData.push({ ...newRecord, id: Date.now().toString() });
-                    
-                    // Update localStorage cache
-                    localStorage.setItem('fuelData', JSON.stringify(fuelData));
-                    
-                    // Show success notification
-                    showNotification('Fuel record saved successfully!', 'success');
-                    
-                    // Reset form
-                    userFuelForm.reset();
-                    userRunningHours.value = '';
-                    
-                    // Refresh data
-                    loadFuelData();
-                    
-                } catch (error) {
-                    console.error('Error saving record:', error);
-                    showNotification('Failed to save record. Please try again.', 'error');
-                }
-            });
-
-            // Admin form time change handlers
-            adminStartTime.addEventListener('change', () => updateRunningHours(adminStartTime, adminEndTime, adminRunningHours));
-            adminEndTime.addEventListener('change', () => updateRunningHours(adminStartTime, adminEndTime, adminRunningHours));
-
-            // User form time change handlers
-            userStartTime.addEventListener('change', () => updateRunningHours(userStartTime, userEndTime, userRunningHours));
-            userEndTime.addEventListener('change', () => updateRunningHours(userStartTime, userEndTime, userRunningHours));
-
-            // Sidebar navigation
-            adminSidebarNav.addEventListener('click', function(e) {
-                const target = e.target.closest('.nav-item');
-                if (target) {
-                    // Remove active class from all items
-                    document.querySelectorAll('.nav-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    
-                    // Add active class to clicked item
-                    target.classList.add('active');
-                    
-                    // Show corresponding page
-                    const pageId = target.getAttribute('data-page');
-                    document.querySelectorAll('.content-page').forEach(page => {
-                        page.classList.remove('active');
-                    });
-                    document.getElementById(pageId).classList.add('active');
-                    
-                    // Load data if needed
-                    if (pageId === 'adminDashboardView') {
-                        loadFuelData();
-                    } else if (pageId === 'accountManagement') {
-                        loadAllUserData();
-                    }
-                }
-            });
-
-            // Logout
-            logoutBtn.addEventListener('click', async function() {
-                try {
-                    await auth.signOut();
-                    currentUser = null;
-                    currentRole = null;
-                    showAuthPage('loginPage');
-                    authContainer.style.display = 'flex';
-                    adminDashboard.style.display = 'none';
-                    showNotification('Logged out successfully!', 'success');
-                } catch (error) {
-                    showNotification('Error logging out. Please try again.', 'error');
-                }
-            });
-
-            userLogoutBtn.addEventListener('click', async function() {
-                try {
-                    await auth.signOut();
-                    currentUser = null;
-                    currentRole = null;
-                    showAuthPage('loginPage');
-                    authContainer.style.display = 'flex';
-                    userDashboard.style.display = 'none';
-                    showNotification('Logged out successfully!', 'success');
-                } catch (error) {
-                    showNotification('Error logging out. Please try again.', 'error');
-                }
-            });
-
-            // Clear filters
-            adminClearFilters.addEventListener('click', function() {
-                adminFilterGeneratorId.value = '';
-                adminFilterDateFrom.value = '';
-                adminFilterDateTo.value = '';
-                applyFilters();
-                showNotification('Filters cleared', 'info');
-            });
-
-            // Add real-time filtering
-            adminFilterGeneratorId.addEventListener('input', applyFilters);
-            adminFilterDateFrom.addEventListener('change', applyFilters);
-            adminFilterDateTo.addEventListener('change', applyFilters);
-            accountFilter.addEventListener('input', applyAccountFilters);
-
-            // Export to Excel
-            adminExportExcel.addEventListener('click', function() {
-                if (currentFilteredData.length === 0) {
-                    showNotification('No data to export.', 'warning');
-                    return;
-                }
-
-                // Prepare data for export
-                const exportData = currentFilteredData.map(record => ({
-                    'Generator ID': record.generatorId,
-                    'Date': formatDate(record.date),
-                    'Start Time': formatTime(record.startTime),
-                    'End Time': formatTime(record.endTime),
-                    'Running Hours': record.runningHours,
-                    'Fuel Added (L)': record.fuelAdded,
-                    'Consumption (L/hr)': record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00',
-                    'Technician': record.technician
-                }));
-
-                // Create worksheet
-                const ws = XLSX.utils.json_to_sheet(exportData);
-                
-                // Create workbook
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, 'Fuel Records');
-                
-                // Generate file name with current date
-                const dateStr = new Date().toISOString().slice(0, 10);
-                XLSX.writeFile(wb, `Generator_Fuel_Records_${dateStr}.xlsx`);
-                
-                showNotification('Excel export completed', 'success');
-            });
-
-            // Print to PDF
-            adminPrintPdf.addEventListener('click', function() {
-                if (currentFilteredData.length === 0) {
-                    showNotification('No data to export.', 'warning');
-                    return;
-                }
-
-                // Create a new jsPDF instance
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // Add title
-                doc.setFontSize(18);
-                doc.text('Generator Fuel Records', 14, 20);
-                
-                // Add dashboard info with filtered data
-                doc.setFontSize(12);
-                const totalFuelLiters = currentFilteredData.reduce((sum, record) => sum + parseFloat(record.fuelAdded), 0);
-                const totalRunningHours = currentFilteredData.reduce((sum, record) => sum + parseFloat(record.runningHours), 0);
-                const avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
-                
-                doc.text(`Total Fuel Used: ${formatNumber(totalFuelLiters)} L`, 14, 30);
-                doc.text(`Total Running Hours: ${formatNumber(totalRunningHours)} hrs`, 14, 36);
-                doc.text(`Average Consumption: ${formatNumber(avgConsumptionRate)} L/hr`, 14, 42);
-                
-                // Add date duration
-                const dateRange = formatDateRange();
-                doc.text(`Date Duration: ${dateRange}`, 14, 48);
-                
-                // Prepare table data
-                const tableData = currentFilteredData.map(record => [
-                    record.generatorId,
-                    formatDate(record.date),
-                    formatTime(record.startTime),
-                    formatTime(record.endTime),
-                    `${record.runningHours} hrs`,
-                    `${formatNumber(record.fuelAdded)} L`,
-                    `${(record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00')} L/hr`,
-                    record.technician
-                ]);
-                
-                // Add table
-                doc.autoTable({
-                    head: [['Generator ID', 'Date', 'Start Time', 'End Time', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
-                    body: tableData,
-                    startY: 55,
-                    theme: 'striped',
-                    styles: { fontSize: 10 },
-                    headStyles: { fillColor: [102, 126, 234] }
                 });
-                
-                // Add footer
-                const pageCount = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= pageCount; i++) {
-                    doc.setPage(i);
-                    doc.setFontSize(8);
-                    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-                }
-                
-                // Save the PDF
-                const dateStr = new Date().toISOString().slice(0, 10);
-                doc.save(`Generator_Fuel_Records_${dateStr}.pdf`);
-                
-                showNotification('PDF export completed', 'success');
-            });
 
-            // Open Edit Modal
-            function openEditModal(e) {
-                const id = e.target.getAttribute('data-id');
-                const record = fuelData.find(r => r.id === id);
-                
-                if (record) {
-                    editRecordId.value = record.id;
-                    editGeneratorId.value = record.generatorId;
-                    editDate.value = record.date;
-                    editStartTime.value = record.startTime;
-                    editEndTime.value = record.endTime;
-                    editFuelAdded.value = record.fuelAdded;
-                    editTechnician.value = record.technician;
+                // Show register page
+                showRegister.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showAuthPage('registerPage');
+                });
+
+                // Show login page
+                showLogin.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showAuthPage('loginPage');
+                });
+
+                // Admin fuel form submission
+                adminFuelForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
                     
-                    // Update running hours display
-                    updateEditRunningHours();
+                    const genId = adminGeneratorId.value.trim();
+                    const recordDate = adminDate.value;
+                    const start = adminStartTime.value;
+                    const end = adminEndTime.value;
+                    const fuel = parseFloat(adminFuelAdded.value);
+                    const tech = adminTechnician.value.trim();
                     
-                    editModal.style.display = 'block';
-                }
-            }
-
-            // Close Modal
-            function closeModalHandler() {
-                editModal.style.display = 'none';
-                editForm.reset();
-            }
-
-            // Open Edit Account Modal
-            function openEditAccountModal(e) {
-                const id = e.target.getAttribute('data-id');
-                const user = userData.find(u => u.id === id);
-                
-                if (user) {
-                    editAccountId.value = user.id;
-                    editAccountUsername.value = user.displayName;
-                    editAccountEmail.value = user.email;
-                    editAccountRole.value = user.role;
+                    // Validate times
+                    if (start && end && new Date(`1970-01-01T${end}`) < new Date(`1970-01-01T${start}`)) {
+                        showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
+                        return;
+                    }
                     
-                    editAccountModal.style.display = 'block';
-                }
-            }
+                    // Validate required fields
+                    if (!genId || !recordDate || !start || !end || !fuel || !tech) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate running hours
+                    const runningHrs = calculateRunningHours(start, end);
+                    
+                    // Create new record
+                    const newRecord = {
+                        generatorId: genId,
+                        date: recordDate,
+                        startTime: start,
+                        endTime: end,
+                        runningHours: parseFloat(runningHrs),
+                        fuelAdded: fuel,
+                        technician: tech,
+                        timestamp: new Date().toISOString(),
+                        createdBy: currentUser.uid
+                    };
+                    
+                    try {
+                        await saveToFirestore(newRecord);
+                        
+                        // Add to local data
+                        fuelData.push({ ...newRecord, id: Date.now().toString() });
+                        
+                        // Update localStorage cache
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Show success notification
+                        showNotification('Fuel record saved successfully!', 'success');
+                        
+                        // Reset form
+                        adminFuelForm.reset();
+                        adminRunningHours.value = '';
+                        
+                        // Refresh data
+                        loadFuelData();
+                        
+                    } catch (error) {
+                        console.error('Error saving record:', error);
+                        showNotification('Failed to save record. Please try again.', 'error');
+                    }
+                });
 
-            // Close Account Modal
-            function closeAccountModalHandler() {
-                editAccountModal.style.display = 'none';
-                editAccountForm.reset();
-            }
+                // User fuel form submission
+                userFuelForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const genId = userGeneratorId.value.trim();
+                    const recordDate = userDate.value;
+                    const start = userStartTime.value;
+                    const end = userEndTime.value;
+                    const fuel = parseFloat(userFuelAdded.value);
+                    const tech = userTechnician.value.trim();
+                    
+                    // Validate times
+                    if (start && end && new Date(`1970-01-01T${end}`) < new Date(`1970-01-01T${start}`)) {
+                        showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
+                        return;
+                    }
+                    
+                    // Validate required fields
+                    if (!genId || !recordDate || !start || !end || !fuel || !tech) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate running hours
+                    const runningHrs = calculateRunningHours(start, end);
+                    
+                    // Create new record
+                    const newRecord = {
+                        generatorId: genId,
+                        date: recordDate,
+                        startTime: start,
+                        endTime: end,
+                        runningHours: parseFloat(runningHrs),
+                        fuelAdded: fuel,
+                        technician: tech,
+                        timestamp: new Date().toISOString(),
+                        createdBy: currentUser.uid
+                    };
+                    
+                    try {
+                        await saveToFirestore(newRecord);
+                        
+                        // Add to local data
+                        fuelData.push({ ...newRecord, id: Date.now().toString() });
+                        
+                        // Update localStorage cache
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Show success notification
+                        showNotification('Fuel record saved successfully!', 'success');
+                        
+                        // Reset form
+                        userFuelForm.reset();
+                        userRunningHours.value = '';
+                        
+                        // Refresh data
+                        loadFuelData();
+                        
+                    } catch (error) {
+                        console.error('Error saving record:', error);
+                        showNotification('Failed to save record. Please try again.', 'error');
+                    }
+                });
 
-            // Open Delete Confirmation
-            function openDeleteConfirmation(e) {
-                const id = e.target.getAttribute('data-id');
-                const user = userData.find(u => u.id === id);
-                
-                if (user) {
-                    accountToDelete = user;
-                    deleteUsername.textContent = user.displayName;
-                    deleteEmail.textContent = user.email;
-                    deleteConfirmModal.style.display = 'block';
-                }
-            }
+                // Admin form time change handlers
+                adminStartTime.addEventListener('change', () => updateRunningHours(adminStartTime, adminEndTime, adminRunningHours));
+                adminEndTime.addEventListener('change', () => updateRunningHours(adminStartTime, adminEndTime, adminRunningHours));
 
-            // Close Delete Modal
-            function closeDeleteModalHandler() {
-                deleteConfirmModal.style.display = 'none';
-                accountToDelete = null;
-            }
+                // User form time change handlers
+                userStartTime.addEventListener('change', () => updateRunningHours(userStartTime, userEndTime, userRunningHours));
+                userEndTime.addEventListener('change', () => updateRunningHours(userStartTime, userEndTime, userRunningHours));
 
-            // Confirm Delete (renamed from confirmDelete to avoid conflict)
-            function confirmDeleteBtnHandler() {
-                if (!accountToDelete) return;
-                
-                // Don't allow deleting own account
-                if (accountToDelete.uid === currentUser.uid) {
-                    showNotification("You cannot delete your own account.", 'error');
-                    closeDeleteModalHandler();
-                    return;
+                // Sidebar navigation
+                adminSidebarNav.addEventListener('click', function(e) {
+                    const target = e.target.closest('.nav-item');
+                    if (target) {
+                        // Remove active class from all items
+                        document.querySelectorAll('.nav-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        
+                        // Add active class to clicked item
+                        target.classList.add('active');
+                        
+                        // Show corresponding page
+                        const pageId = target.getAttribute('data-page');
+                        document.querySelectorAll('.content-page').forEach(page => {
+                            page.classList.remove('active');
+                        });
+                        document.getElementById(pageId).classList.add('active');
+                        
+                        // Load data if needed
+                        if (pageId === 'adminDashboardView') {
+                            loadFuelData();
+                        } else if (pageId === 'accountManagement') {
+                            loadAllUserData();
+                        }
+                    }
+                });
+
+                // Logout
+                logoutBtn.addEventListener('click', async function() {
+                    try {
+                        await auth.signOut();
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                        adminDashboard.style.display = 'none';
+                        showNotification('Logged out successfully!', 'success');
+                    } catch (error) {
+                        showNotification('Error logging out. Please try again.', 'error');
+                    }
+                });
+
+                userLogoutBtn.addEventListener('click', async function() {
+                    try {
+                        await auth.signOut();
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                        userDashboard.style.display = 'none';
+                        showNotification('Logged out successfully!', 'success');
+                    } catch (error) {
+                        showNotification('Error logging out. Please try again.', 'error');
+                    }
+                });
+
+                // Clear filters
+                adminClearFilters.addEventListener('click', function() {
+                    adminFilterGeneratorId.value = '';
+                    adminFilterDateFrom.value = '';
+                    adminFilterDateTo.value = '';
+                    applyFilters();
+                    showNotification('Filters cleared', 'info');
+                });
+
+                // Add real-time filtering
+                adminFilterGeneratorId.addEventListener('input', applyFilters);
+                adminFilterDateFrom.addEventListener('change', applyFilters);
+                adminFilterDateTo.addEventListener('change', applyFilters);
+                accountFilter.addEventListener('input', applyAccountFilters);
+
+                // Export to Excel
+                adminExportExcel.addEventListener('click', function() {
+                    if (currentFilteredData.length === 0) {
+                        showNotification('No data to export.', 'warning');
+                        return;
+                    }
+
+                    // Prepare data for export
+                    const exportData = currentFilteredData.map(record => ({
+                        'Generator ID': record.generatorId,
+                        'Date': formatDate(record.date),
+                        'Start Time': formatTime(record.startTime),
+                        'End Time': formatTime(record.endTime),
+                        'Running Hours': record.runningHours,
+                        'Fuel Added (L)': record.fuelAdded,
+                        'Consumption (L/hr)': record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00',
+                        'Technician': record.technician
+                    }));
+
+                    // Create worksheet
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    
+                    // Create workbook
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Fuel Records');
+                    
+                    // Generate file name with current date
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    XLSX.writeFile(wb, `Generator_Fuel_Records_${dateStr}.xlsx`);
+                    
+                    showNotification('Excel export completed', 'success');
+                });
+
+                // Print to PDF
+                adminPrintPdf.addEventListener('click', function() {
+                    if (currentFilteredData.length === 0) {
+                        showNotification('No data to export.', 'warning');
+                        return;
+                    }
+
+                    // Create a new jsPDF instance
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // Add title
+                    doc.setFontSize(18);
+                    doc.text('Generator Fuel Records', 14, 20);
+                    
+                    // Add dashboard info with filtered data
+                    doc.setFontSize(12);
+                    const totalFuelLiters = currentFilteredData.reduce((sum, record) => sum + parseFloat(record.fuelAdded), 0);
+                    const totalRunningHours = currentFilteredData.reduce((sum, record) => sum + parseFloat(record.runningHours), 0);
+                    const avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
+                    
+                    doc.text(`Total Fuel Used: ${formatNumber(totalFuelLiters)} L`, 14, 30);
+                    doc.text(`Total Running Hours: ${formatNumber(totalRunningHours)} hrs`, 14, 36);
+                    doc.text(`Average Consumption: ${formatNumber(avgConsumptionRate)} L/hr`, 14, 42);
+                    
+                    // Add date duration
+                    const dateRange = formatDateRange();
+                    doc.text(`Date Duration: ${dateRange}`, 14, 48);
+                    
+                    // Prepare table data
+                    const tableData = currentFilteredData.map(record => [
+                        record.generatorId,
+                        formatDate(record.date),
+                        formatTime(record.startTime),
+                        formatTime(record.endTime),
+                        `${record.runningHours} hrs`,
+                        `${formatNumber(record.fuelAdded)} L`,
+                        `${(record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00')} L/hr`,
+                        record.technician
+                    ]);
+                    
+                    // Add table
+                    doc.autoTable({
+                        head: [['Generator ID', 'Date', 'Start Time', 'End Time', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
+                        body: tableData,
+                        startY: 55,
+                        theme: 'striped',
+                        styles: { fontSize: 10 },
+                        headStyles: { fillColor: [102, 126, 234] }
+                    });
+                    
+                    // Add footer
+                    const pageCount = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8);
+                        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                    }
+                    
+                    // Save the PDF
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    doc.save(`Generator_Fuel_Records_${dateStr}.pdf`);
+                    
+                    showNotification('PDF export completed', 'success');
+                });
+
+                // Open Edit Modal
+                function openEditModal(e) {
+                    const id = e.target.getAttribute('data-id');
+                    const record = fuelData.find(r => r.id === id);
+                    
+                    if (record) {
+                        editRecordId.value = record.id;
+                        editGeneratorId.value = record.generatorId;
+                        editDate.value = record.date;
+                        editStartTime.value = record.startTime;
+                        editEndTime.value = record.endTime;
+                        editFuelAdded.value = record.fuelAdded;
+                        editTechnician.value = record.technician;
+                        
+                        // Update running hours display
+                        updateEditRunningHours();
+                        
+                        editModal.style.display = 'block';
+                    }
                 }
-                
-                // Don't allow deleting the only admin
-                const adminCount = userData.filter(u => u.role === 'admin').length;
-                if (accountToDelete.role === 'admin' && adminCount <= 1) {
-                    showNotification("You cannot delete the only admin account.", 'error');
-                    closeDeleteModalHandler();
-                    return;
+
+                // Close Modal
+                function closeModalHandler() {
+                    editModal.style.display = 'none';
+                    editForm.reset();
                 }
-                
-                // Delete user from Firestore
-                db.collection('users').doc(accountToDelete.id).delete()
-                    .then(() => {
+
+                // Open Edit Account Modal
+                function openEditAccountModal(e) {
+                    const id = e.target.getAttribute('data-id');
+                    const user = userData.find(u => u.id === id);
+                    
+                    if (user) {
+                        editAccountId.value = user.id;
+                        editAccountUsername.value = user.displayName;
+                        editAccountEmail.value = user.email;
+                        editAccountRole.value = user.role;
+                        
+                        editAccountModal.style.display = 'block';
+                    }
+                }
+
+                // Close Account Modal
+                function closeAccountModalHandler() {
+                    editAccountModal.style.display = 'none';
+                    editAccountForm.reset();
+                }
+
+                // Open Delete Confirmation
+                function openDeleteConfirmation(e) {
+                    const id = e.target.getAttribute('data-id');
+                    const user = userData.find(u => u.id === id);
+                    
+                    if (user) {
+                        accountToDelete = user;
+                        deleteUsername.textContent = user.displayName;
+                        deleteEmail.textContent = user.email;
+                        deleteConfirmModal.style.display = 'block';
+                    }
+                }
+
+                // Close Delete Modal
+                function closeDeleteModalHandler() {
+                    deleteConfirmModal.style.display = 'none';
+                    accountToDelete = null;
+                }
+
+                // Confirm Delete Account
+                function confirmDeleteAccountHandler() {
+                    if (!accountToDelete) return;
+                    
+                    // Don't allow deleting own account
+                    if (accountToDelete.uid === currentUser.uid) {
+                        showNotification("You cannot delete your own account.", 'error');
+                        closeDeleteModalHandler();
+                        return;
+                    }
+                    
+                    // Don't allow deleting the only admin
+                    const adminCount = userData.filter(u => u.role === 'admin').length;
+                    if (accountToDelete.role === 'admin' && adminCount <= 1) {
+                        showNotification("You cannot delete the only admin account.", 'error');
+                        closeDeleteModalHandler();
+                        return;
+                    }
+                    
+                    // Delete user from Firestore
+                    db.collection('users').doc(accountToDelete.id).delete()
+                        .then(() => {
+                            // Remove from local data
+                            userData = userData.filter(u => u.id !== accountToDelete.id);
+                            
+                            // Update UI
+                            applyAccountFilters();
+                            
+                            showNotification('Account deleted successfully!', 'success');
+                            closeDeleteModalHandler();
+                        })
+                        .catch((error) => {
+                            console.error('Error deleting user:', error);
+                            showNotification('Failed to delete account. Please try again.', 'error');
+                            closeDeleteModalHandler();
+                        });
+                }
+
+                // Confirm Delete Record
+                function confirmDeleteRecord(e) {
+                    const id = e.target.getAttribute('data-id');
+                    const record = fuelData.find(r => r.id === id);
+                    
+                    if (record) {
+                        if (confirm('Are you sure you want to delete this record?')) {
+                            deleteRecord(id);
+                        }
+                    }
+                }
+
+                // Delete Record
+                async function deleteRecord(id) {
+                    try {
+                        await deleteFromFirestore(id);
+                        
                         // Remove from local data
-                        userData = userData.filter(u => u.id !== accountToDelete.id);
+                        fuelData = fuelData.filter(record => record.id !== id);
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Update UI
+                        applyFilters();
+                        
+                        showNotification('Record deleted successfully!', 'success');
+                    } catch (error) {
+                        console.error('Error deleting record:', error);
+                        showNotification('Failed to delete record. Please try again.', 'error');
+                    }
+                }
+
+                // Edit Form Submission
+                editForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const id = editRecordId.value;
+                    const record = {
+                        generatorId: editGeneratorId.value.trim(),
+                        date: editDate.value,
+                        startTime: editStartTime.value,
+                        endTime: editEndTime.value,
+                        runningHours: parseFloat(calculateRunningHours(editStartTime.value, editEndTime.value)),
+                        fuelAdded: parseFloat(editFuelAdded.value),
+                        technician: editTechnician.value.trim(),
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    try {
+                        await updateFirestore(id, record);
+                        
+                        // Update local data
+                        const index = fuelData.findIndex(r => r.id === id);
+                        if (index !== -1) {
+                            fuelData[index] = { ...record, id };
+                        }
+                        
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Update UI
+                        applyFilters();
+                        
+                        closeModalHandler();
+                        showNotification('Record updated successfully!', 'success');
+                    } catch (error) {
+                        console.error('Error updating record:', error);
+                        showNotification('Failed to update record. Please try again.', 'error');
+                    }
+                });
+
+                // Edit Account Form Submission
+                editAccountForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const id = editAccountId.value;
+                    const userData = {
+                        displayName: editAccountUsername.value.trim(),
+                        role: editAccountRole.value
+                    };
+                    
+                    try {
+                        await db.collection('users').doc(id).update(userData);
+                        
+                        // Update local data
+                        const index = userData.findIndex(u => u.id === id);
+                        if (index !== -1) {
+                            userData[index] = { ...userData[index], ...userData };
+                        }
                         
                         // Update UI
                         applyAccountFilters();
                         
-                        showNotification('Account deleted successfully!', 'success');
-                        closeDeleteModalHandler();
-                    })
-                    .catch((error) => {
-                        console.error('Error deleting user:', error);
-                        showNotification('Failed to delete account. Please try again.', 'error');
-                        closeDeleteModalHandler();
-                    });
-            }
-
-            // Delete Record
-            async function deleteRecord(id) {
-                try {
-                    await deleteFromFirestore(id);
-                    
-                    // Remove from local data
-                    fuelData = fuelData.filter(record => record.id !== id);
-                    localStorage.setItem('fuelData', JSON.stringify(fuelData));
-                    
-                    // Update UI
-                    applyFilters();
-                    
-                    showNotification('Record deleted successfully!', 'success');
-                } catch (error) {
-                    console.error('Error deleting record:', error);
-                    showNotification('Failed to delete record. Please try again.', 'error');
-                }
-            }
-
-            // Edit Form Submission
-            editForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const id = editRecordId.value;
-                const record = {
-                    generatorId: editGeneratorId.value.trim(),
-                    date: editDate.value,
-                    startTime: editStartTime.value,
-                    endTime: editEndTime.value,
-                    runningHours: parseFloat(calculateRunningHours(editStartTime.value, editEndTime.value)),
-                    fuelAdded: parseFloat(editFuelAdded.value),
-                    technician: editTechnician.value.trim(),
-                    timestamp: new Date().toISOString()
-                };
-                
-                try {
-                    await updateFirestore(id, record);
-                    
-                    // Update local data
-                    const index = fuelData.findIndex(r => r.id === id);
-                    if (index !== -1) {
-                        fuelData[index] = { ...record, id };
+                        closeAccountModalHandler();
+                        showNotification('Account updated successfully!', 'success');
+                    } catch (error) {
+                        console.error('Error updating account:', error);
+                        showNotification('Failed to update account. Please try again.', 'error');
                     }
-                    
-                    localStorage.setItem('fuelData', JSON.stringify(fuelData));
-                    
-                    // Update UI
-                    applyFilters();
-                    
-                    closeModalHandler();
-                    showNotification('Record updated successfully!', 'success');
-                } catch (error) {
-                    console.error('Error updating record:', error);
-                    showNotification('Failed to update record. Please try again.', 'error');
-                }
-            });
+                });
 
-            // Edit Account Form Submission
-            editAccountForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
+                // Edit form time change handlers
+                editStartTime.addEventListener('change', updateEditRunningHours);
+                editEndTime.addEventListener('change', updateEditRunningHours);
+
+                // Modal event listeners
+                closeModal.addEventListener('click', closeModalHandler);
+                cancelEdit.addEventListener('click', closeModalHandler);
                 
-                const id = editAccountId.value;
-                const userData = {
-                    displayName: editAccountUsername.value.trim(),
-                    role: editAccountRole.value
-                };
+                closeAccountModal.addEventListener('click', closeAccountModalHandler);
+                cancelEditAccount.addEventListener('click', closeAccountModalHandler);
                 
-                try {
-                    await db.collection('users').doc(id).update(userData);
-                    
-                    // Update local data
-                    const index = userData.findIndex(u => u.id === id);
-                    if (index !== -1) {
-                        userData[index] = { ...userData[index], ...userData };
+                closeDeleteModal.addEventListener('click', closeDeleteModalHandler);
+                cancelDelete.addEventListener('click', closeDeleteModalHandler);
+                confirmDeleteBtn.addEventListener('click', confirmDeleteAccountHandler);
+
+                // Close modal when clicking outside
+                window.addEventListener('click', function(e) {
+                    if (e.target === editModal) {
+                        closeModalHandler();
+                    } else if (e.target === editAccountModal) {
+                        closeAccountModalHandler();
+                    } else if (e.target === deleteConfirmModal) {
+                        closeDeleteModalHandler();
                     }
-                    
-                    // Update UI
-                    applyAccountFilters();
-                    
-                    closeAccountModalHandler();
-                    showNotification('Account updated successfully!', 'success');
-                } catch (error) {
-                    console.error('Error updating account:', error);
-                    showNotification('Failed to update account. Please try again.', 'error');
-                }
-            });
+                });
 
-            // Edit form time change handlers
-            editStartTime.addEventListener('change', updateEditRunningHours);
-            editEndTime.addEventListener('change', updateEditRunningHours);
+                // Close notification when clicking X
+                closeNotification.addEventListener('click', hideNotification);
 
-            // Modal event listeners
-            closeModal.addEventListener('click', closeModalHandler);
-            cancelEdit.addEventListener('click', closeModalHandler);
-            
-            closeAccountModal.addEventListener('click', closeAccountModalHandler);
-            cancelEditAccount.addEventListener('click', closeAccountModalHandler);
-            
-            closeDeleteModal.addEventListener('click', closeDeleteModalHandler);
-            cancelDelete.addEventListener('click', closeDeleteModalHandler);
-            confirmDeleteBtn.addEventListener('click', confirmDeleteBtnHandler); // Use the renamed function
-
-            // Close modal when clicking outside
-            window.addEventListener('click', function(e) {
-                if (e.target === editModal) {
-                    closeModalHandler();
-                } else if (e.target === editAccountModal) {
-                    closeAccountModalHandler();
-                } else if (e.target === deleteConfirmModal) {
-                    closeDeleteModalHandler();
-                }
-            });
-
-            // Close notification when clicking X
-            closeNotification.addEventListener('click', hideNotification);
-
-            // Auth state change listener
-            auth.onAuthStateChanged(async (user) => {
-                if (user) {
-                    // User is signed in
-                    const userData = await loadUserData(user.uid);
-                    if (userData) {
-                        currentUser = user;
-                        currentRole = userData.role;
-                        
-                        // Update UI
-                        if (currentRole === 'admin') {
-                            adminName.textContent = userData.displayName || userData.email;
-                            adminEmail.textContent = userData.email;
-                            setUserAvatar(adminAvatar, userData.displayName || userData.email);
-                            showDashboard('admin');
-                            loadFuelData();
-                            loadAllUserData();
+                // Auth state change listener
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        // User is signed in
+                        const userData = await loadUserData(user.uid);
+                        if (userData) {
+                            currentUser = user;
+                            currentRole = userData.role;
+                            
+                            // Update UI
+                            if (currentRole === 'admin') {
+                                adminName.textContent = userData.displayName || userData.email;
+                                adminEmail.textContent = userData.email;
+                                setUserAvatar(adminAvatar, userData.displayName || userData.email);
+                                showDashboard('admin');
+                                loadFuelData();
+                                loadAllUserData();
+                            } else {
+                                userName.textContent = userData.displayName || userData.email;
+                                userEmail.textContent = userData.email;
+                                setUserAvatar(userAvatar, userData.displayName || userData.email);
+                                showDashboard('user');
+                            }
                         } else {
-                            userName.textContent = userData.displayName || userData.email;
-                            userEmail.textContent = userData.email;
-                            setUserAvatar(userAvatar, userData.displayName || userData.email);
-                            showDashboard('user');
+                            // User exists but no data in Firestore - sign out
+                            await auth.signOut();
+                            showAuthPage('loginPage');
+                            authContainer.style.display = 'flex';
+                            showNotification('User data not found. Please contact administrator.', 'error');
                         }
                     } else {
-                        // User exists but no data in Firestore - sign out
-                        await auth.signOut();
+                        // User is signed out
+                        currentUser = null;
+                        currentRole = null;
                         showAuthPage('loginPage');
                         authContainer.style.display = 'flex';
-                        showNotification('User data not found. Please contact administrator.', 'error');
                     }
-                } else {
-                    // User is signed out
-                    currentUser = null;
-                    currentRole = null;
+                });
+
+                // Initialize the app
+                function initApp() {
+                    // Show login page by default
                     showAuthPage('loginPage');
-                    authContainer.style.display = 'flex';
+                    
+                    // Check if user is already signed in
+                    const user = auth.currentUser;
+                    if (user) {
+                        // The onAuthStateChanged listener will handle this
+                    }
                 }
-            });
 
-            // Initialize the app
-            function initApp() {
-                // Show login page by default
-                showAuthPage('loginPage');
-                
-                // Check if user is already signed in
-                const user = auth.currentUser;
-                if (user) {
-                    // The onAuthStateChanged listener will handle this
-                }
-            }
+                // Start the app
+                initApp();
 
-            // Start the app
-            initApp();
-
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
-            // Show error message to user
-            document.body.innerHTML = `
-                <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; font-family: Arial, sans-serif;">
-                    <div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; max-width: 600px;">
-                        <h1 style="color: #e74c3c; margin-bottom: 20px;"><i class="fas fa-exclamation-triangle"></i> Configuration Error</h1>
-                        <p style="color: #333; margin-bottom: 20px;">Firebase configuration is missing or incorrect.</p>
-                        <p style="color: #7f8c8d; margin-bottom: 30px; line-height: 1.6;">
-                            Please follow these steps to fix the issue:<br><br>
-                            1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color: #667eea;">Firebase Console</a><br>
-                            2. Create a new project or select an existing one<br>
-                            3. Register your web app and get the configuration object<br>
-                            4. Replace the firebaseConfig object in script.js with your own configuration
-                        </p>
-                        <button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 1rem;">
-                            Retry
-                        </button>
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                // Show error message to user
+                document.body.innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; font-family: Arial, sans-serif;">
+                        <div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; max-width: 600px;">
+                            <h1 style="color: #e74c3c; margin-bottom: 20px;"><i class="fas fa-exclamation-triangle"></i> Configuration Error</h1>
+                            <p style="color: #333; margin-bottom: 20px;">Firebase configuration is missing or incorrect.</p>
+                            <p style="color: #7f8c8d; margin-bottom: 30px; line-height: 1.6;">
+                                Please follow these steps to fix the issue:<br><br>
+                                1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color: #667eea;">Firebase Console</a><br>
+                                2. Create a new project or select an existing one<br>
+                                3. Register your web app and get the configuration object<br>
+                                4. Replace the firebaseConfig object in script.js with your own configuration
+                            </p>
+                            <button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 1rem;">
+                                Retry
+                            </button>
+                        </div>
                     </div>
-                </div>
-            `;
-        }
+                `;
+            }
+        })();
     </script>
 </body>
 </html>
