@@ -672,15 +672,6 @@
             background-color: #c0392b;
         }
 
-        .action-btn-register {
-            background-color: #27ae60;
-            color: white;
-        }
-
-        .action-btn-register:hover {
-            background-color: #2ecc71;
-        }
-
         .no-records {
             text-align: center;
             color: #7f8c8d;
@@ -1515,7 +1506,7 @@
         // Complete rewrite with fixed account management
         (function() {
             // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
-            const firebaseConfig = {
+     const firebaseConfig = {
   apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
   authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
   projectId: "generator-fuel-tracker-1aa43",
@@ -1854,7 +1845,7 @@
                     } catch (error) {
                         console.error('Error loading user ', error);
                         accountsLoading.style.display = 'none';
-                        showNotification('Error loading user  ' + error.message, 'error');
+                        showNotification('Error loading user data: ' + error.message, 'error');
                     }
                 }
 
