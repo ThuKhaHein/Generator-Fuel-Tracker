@@ -672,6 +672,15 @@
             background-color: #c0392b;
         }
 
+        .action-btn-register {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .action-btn-register:hover {
+            background-color: #2ecc71;
+        }
+
         .no-records {
             text-align: center;
             color: #7f8c8d;
@@ -1233,6 +1242,9 @@
                 <section class="records-section">
                     <div class="records-header">
                         <h2><i class="fas fa-users"></i> User Accounts</h2>
+                        <button id="addUserBtn" class="btn btn-secondary">
+                            <i class="fas fa-user-plus"></i> Add User
+                        </button>
                     </div>
                     
                     <!-- Filter Controls -->
@@ -1398,11 +1410,12 @@
     <div id="editAccountModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-user-edit"></i> Edit Account</h3>
+                <h3><i class="fas fa-user-edit"></i> <span id="accountModalTitle">Edit Account</span></h3>
                 <button id="closeAccountModal" class="close-btn">&times;</button>
             </div>
             <form id="editAccountForm">
                 <input type="hidden" id="editAccountId">
+                <input type="hidden" id="editAccountUid">
                 <div class="form-group">
                     <label for="editAccountUsername">Username *</label>
                     <input type="text" id="editAccountUsername" required />
@@ -1420,7 +1433,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" id="cancelEditAccount" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Account</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -1445,6 +1458,50 @@
         </div>
     </div>
 
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Add New User</h3>
+                <button id="closeAddUserModal" class="close-btn">&times;</button>
+            </div>
+            <form id="addUserForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="addUsername">Username *</label>
+                        <input type="text" id="addUsername" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="addEmail">Email *</label>
+                        <input type="email" id="addEmail" required />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="addPassword">Password *</label>
+                        <input type="password" id="addPassword" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="addConfirmPassword">Confirm Password *</label>
+                        <input type="password" id="addConfirmPassword" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="addRole">Role *</label>
+                    <select id="addRole" required>
+                        <option value="">Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelAddUser" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div id="notification" class="notification">
         <div class="notification-content">
@@ -1458,7 +1515,7 @@
         // Complete rewrite with fixed account management
         (function() {
             // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
-           const firebaseConfig = {
+            const firebaseConfig = {
   apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
   authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
   projectId: "generator-fuel-tracker-1aa43",
@@ -1515,6 +1572,7 @@
                 const accountsTableBody = document.getElementById('accountsTableBody');
                 const noAccounts = document.getElementById('noAccounts');
                 const accountsLoading = document.getElementById('accountsLoading');
+                const addUserBtn = document.getElementById('addUserBtn');
 
                 // User Dashboard Elements
                 const userDashboard = document.getElementById('userDashboard');
@@ -1550,9 +1608,11 @@
                 const closeAccountModal = document.getElementById('closeAccountModal');
                 const editAccountForm = document.getElementById('editAccountForm');
                 const editAccountId = document.getElementById('editAccountId');
+                const editAccountUid = document.getElementById('editAccountUid');
                 const editAccountUsername = document.getElementById('editAccountUsername');
                 const editAccountEmail = document.getElementById('editAccountEmail');
                 const editAccountRole = document.getElementById('editAccountRole');
+                const accountModalTitle = document.getElementById('accountModalTitle');
                 const cancelEditAccount = document.getElementById('cancelEditAccount');
 
                 // Delete Confirmation Modal
@@ -1562,6 +1622,17 @@
                 const deleteEmail = document.getElementById('deleteEmail');
                 const cancelDelete = document.getElementById('cancelDelete');
                 const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+                // Add User Modal
+                const addUserModal = document.getElementById('addUserModal');
+                const closeAddUserModal = document.getElementById('closeAddUserModal');
+                const addUserForm = document.getElementById('addUserForm');
+                const addUsername = document.getElementById('addUsername');
+                const addEmail = document.getElementById('addEmail');
+                const addPassword = document.getElementById('addPassword');
+                const addConfirmPassword = document.getElementById('addConfirmPassword');
+                const addRole = document.getElementById('addRole');
+                const cancelAddUser = document.getElementById('cancelAddUser');
 
                 // Notification Elements
                 const notification = document.getElementById('notification');
@@ -1783,7 +1854,35 @@
                     } catch (error) {
                         console.error('Error loading user ', error);
                         accountsLoading.style.display = 'none';
-                        showNotification('Error loading user data: ' + error.message, 'error');
+                        showNotification('Error loading user  ' + error.message, 'error');
+                    }
+                }
+
+                // Create new user (admin only)
+                async function createNewUser(username, email, password, role) {
+                    try {
+                        // Create user in Firebase Authentication
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // Update user profile
+                        await user.updateProfile({
+                            displayName: username
+                        });
+                        
+                        // Save user data to Firestore
+                        await db.collection('users').doc(user.uid).set({
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: username,
+                            role: role,
+                            createdAt: new Date().toISOString()
+                        });
+                        
+                        return true;
+                    } catch (error) {
+                        console.error('Error creating user:', error);
+                        throw error;
                     }
                 }
 
@@ -1991,10 +2090,10 @@
                             <td>${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</td>
                             <td>${formatDate(user.createdAt)}</td>
                             <td class="action-buttons">
-                                <button class="action-btn action-btn-edit" data-id="${user.id}" data-type="account">
+                                <button class="action-btn action-btn-edit" data-id="${user.id}" data-uid="${user.uid}">
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
-                                <button class="action-btn action-btn-delete" data-id="${user.id}" data-type="account">
+                                <button class="action-btn action-btn-delete" data-id="${user.id}" data-uid="${user.uid}">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
                             </td>
@@ -2003,11 +2102,11 @@
                     });
                     
                     // Add event listeners to action buttons
-                    document.querySelectorAll('.action-btn-edit[data-type="account"]').forEach(btn => {
+                    document.querySelectorAll('.action-btn-edit').forEach(btn => {
                         btn.addEventListener('click', openEditAccountModal);
                     });
                     
-                    document.querySelectorAll('.action-btn-delete[data-type="account"]').forEach(btn => {
+                    document.querySelectorAll('.action-btn-delete').forEach(btn => {
                         btn.addEventListener('click', openDeleteConfirmation);
                     });
                 }
@@ -2467,16 +2566,26 @@
                 // Open Edit Account Modal
                 function openEditAccountModal(e) {
                     const id = e.target.getAttribute('data-id');
+                    const uid = e.target.getAttribute('data-uid');
                     const user = userData.find(u => u.id === id);
                     
                     if (user) {
                         editAccountId.value = user.id;
+                        editAccountUid.value = user.uid;
                         editAccountUsername.value = user.displayName;
                         editAccountEmail.value = user.email;
                         editAccountRole.value = user.role;
+                        accountModalTitle.textContent = 'Edit Account';
                         
                         editAccountModal.style.display = 'block';
                     }
+                }
+
+                // Open Add User Modal
+                function openAddUserModal() {
+                    addUserForm.reset();
+                    accountModalTitle.textContent = 'Add New User';
+                    addUserModal.style.display = 'block';
                 }
 
                 // Close Account Modal
@@ -2485,9 +2594,16 @@
                     editAccountForm.reset();
                 }
 
+                // Close Add User Modal
+                function closeAddUserModalHandler() {
+                    addUserModal.style.display = 'none';
+                    addUserForm.reset();
+                }
+
                 // Open Delete Confirmation
                 function openDeleteConfirmation(e) {
                     const id = e.target.getAttribute('data-id');
+                    const uid = e.target.getAttribute('data-uid');
                     const user = userData.find(u => u.id === id);
                     
                     if (user) {
@@ -2616,6 +2732,7 @@
                     e.preventDefault();
                     
                     const id = editAccountId.value;
+                    const uid = editAccountUid.value;
                     const userData = {
                         displayName: editAccountUsername.value.trim(),
                         role: editAccountRole.value
@@ -2641,6 +2758,49 @@
                     }
                 });
 
+                // Add User Form Submission
+                addUserForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const username = addUsername.value.trim();
+                    const email = addEmail.value.trim();
+                    const password = addPassword.value;
+                    const confirmPassword = addConfirmPassword.value;
+                    const role = addRole.value;
+                    
+                    // Validate inputs
+                    if (!username || !email || !password || !confirmPassword || !role) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showNotification('Passwords do not match.', 'error');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showNotification('Password must be at least 6 characters long.', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Create new user
+                        await createNewUser(username, email, password, role);
+                        
+                        // Refresh user data
+                        await loadAllUserData();
+                        
+                        // Close modal
+                        closeAddUserModalHandler();
+                        
+                        showNotification('User created successfully!', 'success');
+                    } catch (error) {
+                        console.error('Error creating user:', error);
+                        showNotification('Failed to create user: ' + error.message, 'error');
+                    }
+                });
+
                 // Edit form time change handlers
                 editStartTime.addEventListener('change', updateEditRunningHours);
                 editEndTime.addEventListener('change', updateEditRunningHours);
@@ -2656,6 +2816,11 @@
                 cancelDelete.addEventListener('click', closeDeleteModalHandler);
                 confirmDeleteBtn.addEventListener('click', confirmDeleteAccountHandler);
 
+                // Add User Modal event listeners
+                closeAddUserModal.addEventListener('click', closeAddUserModalHandler);
+                cancelAddUser.addEventListener('click', closeAddUserModalHandler);
+                addUserBtn.addEventListener('click', openAddUserModal);
+
                 // Close modal when clicking outside
                 window.addEventListener('click', function(e) {
                     if (e.target === editModal) {
@@ -2664,6 +2829,8 @@
                         closeAccountModalHandler();
                     } else if (e.target === deleteConfirmModal) {
                         closeDeleteModalHandler();
+                    } else if (e.target === addUserModal) {
+                        closeAddUserModalHandler();
                     }
                 });
 
