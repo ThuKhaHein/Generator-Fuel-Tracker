@@ -1506,14 +1506,14 @@
         // Complete rewrite with fixed account management
         (function() {
             // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
-     const firebaseConfig = {
-  apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
-  authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
-  projectId: "generator-fuel-tracker-1aa43",
-  storageBucket: "generator-fuel-tracker-1aa43.firebasestorage.app",
-  messagingSenderId: "588123990552",
-  appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
-};
+            const firebaseConfig = {
+                apiKey: "YOUR_API_KEY",
+                authDomain: "your-project-id.firebaseapp.com",
+                projectId: "your-project-id",
+                storageBucket: "your-project-id.appspot.com",
+                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                appId: "YOUR_APP_ID"
+            };
 
             try {
                 // Check if Firebase is already initialized
@@ -2716,7 +2716,7 @@
                         console.error('Error updating record:', error);
                         showNotification('Failed to update record. Please try again.', 'error');
                     }
-                });
+                }
 
                 // Edit Account Form Submission
                 editAccountForm.addEventListener('submit', async function(e) {
