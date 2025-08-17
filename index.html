@@ -1458,7 +1458,7 @@
         // Complete rewrite with fixed account management
         (function() {
             // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
-            const firebaseConfig = {
+           const firebaseConfig = {
   apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
   authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
   projectId: "generator-fuel-tracker-1aa43",
@@ -1767,7 +1767,7 @@
                             userData.push({
                                 id: doc.id,
                                 uid: data.uid,
-                                displayName: data.displayName,
+                                displayName: data.displayName || data.email,
                                 email: data.email,
                                 role: data.role,
                                 createdAt: data.createdAt
@@ -1776,10 +1776,14 @@
                         
                         accountsLoading.style.display = 'none';
                         applyAccountFilters();
+                        
+                        if (userData.length === 0) {
+                            showNotification('No user accounts found. Create some users first.', 'info');
+                        }
                     } catch (error) {
                         console.error('Error loading user ', error);
                         accountsLoading.style.display = 'none';
-                        showNotification('Error loading user data', 'error');
+                        showNotification('Error loading user data: ' + error.message, 'error');
                     }
                 }
 
