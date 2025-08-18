@@ -1160,50 +1160,6 @@
                 <!-- Filter and Records Section -->
                 <section class="records-section">
                     <div class="records-header">
-                        <h2><i class="fas fa-table"></i> User Accounts</h2>
-                        <div class="table-actions">
-                            <button id="addUserBtn" class="btn btn-secondary">
-                                <i class="fas fa-user-plus"></i> Add User
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Filter Controls -->
-                    <div class="filter-container">
-                        <div class="filter-group">
-                            <div class="input-icon">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="accountFilter" placeholder="Search by username or email..." />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Data Table with Actions -->
-                    <div class="table-container">
-                        <table id="accountsTable">
-                            <thead>
-                                <tr>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="accountsTableBody">
-                                <!-- Rows will be inserted here -->
-                            </tbody>
-                        </table>
-                        <p id="noAccounts" class="no-records">No accounts found.</p>
-                        <div id="accountsLoading" class="loading">
-                            <i class="fas fa-spinner fa-spin"></i> Loading data...
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Fuel Records Section -->
-                <section class="records-section">
-                    <div class="records-header">
                         <h2><i class="fas fa-table"></i> Fuel Records</h2>
                         <div class="table-actions">
                             <button id="adminExportExcel" class="btn btn-success">
@@ -1268,12 +1224,52 @@
                 </section>
             </div>
 
-            <!-- Account Management Page (Hidden - now in dashboard) -->
+            <!-- Account Management Page -->
             <div id="accountManagement" class="content-page">
                 <div class="page-header">
                     <h1><i class="fas fa-users-cog"></i> Account Management</h1>
                 </div>
-                <p class="no-records">User accounts are now displayed in the Dashboard section.</p>
+
+                <section class="records-section">
+                    <div class="records-header">
+                        <h2><i class="fas fa-users"></i> User Accounts</h2>
+                        <button id="addUserBtn" class="btn btn-secondary">
+                            <i class="fas fa-user-plus"></i> Add User
+                        </button>
+                    </div>
+                    
+                    <!-- Filter Controls -->
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <div class="input-icon">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="accountFilter" placeholder="Search by username or email..." />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Table with Actions -->
+                    <div class="table-container">
+                        <table id="accountsTable">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountsTableBody">
+                                <!-- Rows will be inserted here -->
+                            </tbody>
+                        </table>
+                        <p id="noAccounts" class="no-records">No accounts found.</p>
+                        <div id="accountsLoading" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Loading data...
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
@@ -1518,7 +1514,6 @@
   messagingSenderId: "588123990552",
   appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
 };
-
             try {
                 // Check if Firebase is already initialized
                 if (!firebase.apps.length) {
@@ -2024,6 +2019,38 @@
                     });
                 }
 
+                // Get filtered data based on current filter values
+                function getFilteredData() {
+                    return fuelData.filter(record => {
+                        // Filter by Generator ID
+                        if (adminFilterGeneratorId.value && !record.generatorId.toLowerCase().includes(adminFilterGeneratorId.value.toLowerCase())) {
+                            return false;
+                        }
+                        
+                        // Filter by date range - from date
+                        if (adminFilterDateFrom.value) {
+                            const recordDate = new Date(record.date);
+                            const fromDate = new Date(adminFilterDateFrom.value);
+                            if (recordDate < fromDate) {
+                                return false;
+                            }
+                        }
+                        
+                        // Filter by date range - to date
+                        if (adminFilterDateTo.value) {
+                            const recordDate = new Date(record.date);
+                            const toDate = new Date(adminFilterDateTo.value);
+                            // Set time to end of day for "to" date
+                            toDate.setHours(23, 59, 59, 999);
+                            if (recordDate > toDate) {
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    });
+                }
+
                 // Apply account filters
                 function applyAccountFilters() {
                     const filteredUsers = userData.filter(user => {
@@ -2350,6 +2377,7 @@
                         // Load data if needed
                         if (pageId === 'adminDashboardView') {
                             loadFuelData();
+                        } else if (pageId === 'accountManagement') {
                             loadAllUserData();
                         }
                     }
@@ -2687,7 +2715,7 @@
                         console.error('Error updating record:', error);
                         showNotification('Failed to update record. Please try again.', 'error');
                     }
-                });
+                }
 
                 // Edit Account Form Submission
                 editAccountForm.addEventListener('submit', async function(e) {
