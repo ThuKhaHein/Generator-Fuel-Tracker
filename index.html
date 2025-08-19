@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Generator Fuel Tracker</title>
+    <!-- Add CSP meta tag for GitHub Pages -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    
+    <!-- Load Firebase from CDN -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Load Excel and PDF libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Auth Container */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .auth-page {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .auth-page.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .auth-form {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-logo i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .auth-logo h1 {
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .auth-form h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 20px;
+        }
+
+        .auth-form .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .auth-form .form-group input, 
+        .auth-form .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .auth-form .form-group input:focus,
+        .auth-form .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .auth-form .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .auth-form .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .auth-form button {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            color: #7f8c8d;
+        }
+
+        .auth-switch a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            display: none;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #2c3e50;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .user-info h4 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .user-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            padding: 0 20px;
+            margin: 5px 0;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 20px;
+        }
+
+        .sidebar-nav li:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-nav li.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #667eea;
+        }
+
+        .sidebar-nav i {
+            font-size: 1.2rem;
+            width: 20px;
+        }
+
+        .sidebar-nav span {
+            font-size: 1rem;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-footer .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background: #f5f7fa;
+        }
+
+        .page-header {
+            background: white;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+        }
+
+        .content-page {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 0 30px 30px;
+        }
+
+        .content-page.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* User Dashboard */
+        .user-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .user-container header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-container .container {
+            padding: 30px;
+        }
+
+        /* Common Styles */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Form Section */
+        .form-section, .dashboard, .records-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e67e22;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: #7f8c8d;
+            border: 1px solid #bdc3c7;
+        }
+
+        .btn-outline:hover {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #2ecc71;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+        }
+
+        /* Dashboard Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f6f8fb 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card i {
+            font-size: 2.5rem;
+            padding: 15px;
+            border-radius: 50%;
+            color: white;
+        }
+
+        .color-orange {
+            background-color: #f39c12;
+        }
+
+        .color-blue {
+            background-color: #3498db;
+        }
+
+        .color-green {
+            background-color: #27ae60;
+        }
+
+        .stat-info h3 {
+            font-size: 1rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        /* Records Section */
+        .records-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .records-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+        }
+
+        /* Filter Container */
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: end;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .input-icon {
+            position: relative;
+        }
+
+        .input-icon i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+
+        .input-icon input {
+            width: 100%;
+            padding: 12px 12px 12px 35px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-icon input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .date-filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-clear {
+            background-color: #95a5a6;
+            color: white;
+            min-width: 120px;
+        }
+
+        .btn-clear:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Table Section */
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fcfcfc;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: white;
+            text-align: left;
+            padding: 15px 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background-color 0.3s ease;
+        }
+
+        th:hover {
+            background-color: #1a252f;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            color: #2c3e50;
+            transition: background-color 0.2s ease;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tr:hover td {
+            color: #1a252f;
+        }
+
+        /* Action Buttons in Table */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn-edit {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .action-btn-edit:hover {
+            background-color: #2980b9;
+        }
+
+        .action-btn-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .action-btn-delete:hover {
+            background-color: #c0392b;
+        }
+
+        .no-records {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 40px;
+            margin: 0;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 20px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            display: none;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+        }
+
+        .close-btn {
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #000;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: flex-end;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-body p {
+            margin: 10px 0;
+            color: #555;
+        }
+
+        /* Notification Toast */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-content {
+            background: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+        }
+
+        .notification-icon {
+            font-size: 20px;
+        }
+
+        .notification-icon.success {
+            color: #2ecc71;
+        }
+
+        .notification-icon.error {
+            color: #e74c3c;
+        }
+
+        .notification-icon.warning {
+            color: #f39c12;
+        }
+
+        .notification-icon.info {
+            color: #3498db;
+        }
+
+        .close-notification {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 20px;
+            cursor: pointer;
+            margin-left: auto;
+            padding: 0 0 0 15px;
+        }
+
+        .close-notification:hover {
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 240px;
+            }
+            .main-content {
+                margin-left: 240px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 200px;
+            }
+            .main-content {
+                margin-left: 200px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .auth-form {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .form-group {
+                min-width: 100%;
+            }
+            
+            .records-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .table-actions {
+                justify-content: center;
+            }
+            
+            .filter-container {
+                flex-direction: column;
+            }
+            
+            .date-filters {
+                flex-direction: column;
+            }
+            
+            .btn-clear {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 0.9rem;
+            }
+            
+            .notification-content {
+                min-width: 250px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .auth-container {
+                padding: 20px;
+            }
+            
+            .auth-form {
+                padding: 20px;
+            }
+            
+            .auth-logo h1 {
+                font-size: 1.5rem;
+            }
+            
+            .auth-form h2 {
+                font-size: 1.5rem;
+            }
+            
+            .sidebar {
+                width: 0;
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Subtle hover effects */
+        .input-icon input:hover {
+            border-color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Pages -->
+    <div id="authContainer" class="auth-container">
+        <!-- Login Page -->
+        <div id="loginPage" class="auth-page active">
+            <div class="auth-form">
+                <div class="auth-logo">
+                    <i class="fas fa-gas-pump"></i>
+                    <h1>Generator Fuel Tracker</h1>
+                </div>
+                <h2><i class="fas fa-sign-in-alt"></i> Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email *</label>
+                        <input type="email" id="loginEmail" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password *</label>
+                        <input type="password" id="loginPassword" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                </form>
+                <p class="auth-switch">
+                    Don't have an account? <a href="#" id="showRegister">Register here</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Register Page -->
+        <div id="registerPage" class="auth-page">
+            <div class="auth-form">
+                <div class="auth-logo">
+                    <i class="fas fa-gas-pump"></i>
+                    <h1>Generator Fuel Tracker</h1>
+                </div>
+                <h2><i class="fas fa-user-plus"></i> Register</h2>
+                <form id="registerForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="registerUsername">Username *</label>
+                            <input type="text" id="registerUsername" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">Email *</label>
+                            <input type="email" id="registerEmail" required />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="registerPassword">Password *</label>
+                            <input type="password" id="registerPassword" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="registerConfirmPassword">Confirm Password *</label>
+                            <input type="password" id="registerConfirmPassword" required />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="registerRole">Role *</label>
+                            <select id="registerRole" required>
+                                <option value="">Select Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="user">User</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Register
+                    </button>
+                </form>
+                <p class="auth-switch">
+                    Already have an account? <a href="#" id="showLogin">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="user-profile">
+                    <div class="avatar" id="adminAvatar">A</div>
+                    <div class="user-info">
+                        <h4 id="adminName">Admin User</h4>
+                        <p id="adminEmail">admin@example.com</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-page="adminForm">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add Fuel Record</span>
+                    </li>
+                    <li class="nav-item" data-page="adminDashboardView">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </li>
+                    <li class="nav-item" data-page="addNewUser">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add New User</span>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logoutBtn" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Admin Form Page -->
+            <div id="adminForm" class="content-page active">
+                <div class="page-header">
+                    <h1><i class="fas fa-plus-circle"></i> Add Fuel Record</h1>
+                </div>
+                <section class="form-section">
+                    <form id="adminFuelForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adminGeneratorId">Generator ID *</label>
+                                <input type="text" id="adminGeneratorId" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="adminDate">Date *</label>
+                                <input type="date" id="adminDate" required />
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adminStartTime">Start Time *</label>
+                                <input type="time" id="adminStartTime" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="adminEndTime">End Time *</label>
+                                <input type="time" id="adminEndTime" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="adminRunningHours">Running Hours</label>
+                                <input type="text" id="adminRunningHours" readonly placeholder="Auto-calculated" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="adminFuelAdded">Fuel Added (Liters) *</label>
+                                <input type="number" id="adminFuelAdded" step="0.01" min="0" required />
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="adminTechnician">Technician Name *</label>
+                            <input type="text" id="adminTechnician" required />
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Record
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <!-- Admin Dashboard View -->
+            <div id="adminDashboardView" class="content-page">
+                <div class="page-header">
+                    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                </div>
+
+                <!-- Dashboard Stats -->
+                <section class="dashboard">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-fire color-orange"></i>
+                            <div class="stat-info">
+                                <h3>Total Fuel Used</h3>
+                                <p id="adminTotalFuel">0 L</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-clock color-blue"></i>
+                            <div class="stat-info">
+                                <h3>Total Running Hours</h3>
+                                <p id="adminTotalHours">0 hrs</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-chart-line color-green"></i>
+                            <div class="stat-info">
+                                <h3>Avg Consumption</h3>
+                                <p id="adminAvgConsumption">0 L/hr</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Filter and Records Section -->
+                <section class="records-section">
+                    <div class="records-header">
+                        <h2><i class="fas fa-table"></i> Fuel Records</h2>
+                        <div class="table-actions">
+                            <button id="adminExportExcel" class="btn btn-success">
+                                <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                            <button id="adminPrintPdf" class="btn btn-warning">
+                                <i class="fas fa-file-pdf"></i> Print PDF
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Controls -->
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <div class="input-icon">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="adminFilterGeneratorId" placeholder="Search by Generator ID..." />
+                            </div>
+                        </div>
+                        <div class="date-filters">
+                            <div class="filter-group">
+                                <div class="input-icon">
+                                    <i class="fas fa-calendar"></i>
+                                    <input type="date" id="adminFilterDateFrom" placeholder="From Date" />
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <div class="input-icon">
+                                    <i class="fas fa-calendar"></i>
+                                    <input type="date" id="adminFilterDateTo" placeholder="To Date" />
+                                </div>
+                            </div>
+                        </div>
+                        <button id="adminClearFilters" class="btn btn-outline btn-clear">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+
+                    <!-- Data Table with Actions -->
+                    <div class="table-container">
+                        <table id="adminRecordsTable">
+                            <thead>
+                                <tr>
+                                    <th>Generator ID</th>
+                                    <th>Date</th>
+                                    <th>Fuel Added (L)</th>
+                                    <th>Running Hours</th>
+                                    <th>Consumption (L/hr)</th>
+                                    <th>Technician</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminTableBody">
+                                <!-- Rows will be inserted here -->
+                            </tbody>
+                        </table>
+                        <p id="adminNoRecords" class="no-records">No records found.</p>
+                        <div id="adminLoading" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Loading data...
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Add New User Page -->
+            <div id="addNewUser" class="content-page">
+                <div class="page-header">
+                    <h1><i class="fas fa-user-plus"></i> Add New User</h1>
+                </div>
+
+                <section class="form-section">
+                    <form id="addNewUserForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addUsername">Username *</label>
+                                <input type="text" id="addUsername" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="addEmail">Email *</label>
+                                <input type="email" id="addEmail" required />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addPassword">Password *</label>
+                                <input type="password" id="addPassword" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="addConfirmPassword">Confirm Password *</label>
+                                <input type="password" id="addConfirmPassword" required />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addRole">Role *</label>
+                                <select id="addRole" required>
+                                    <option value="">Select Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="user">User</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Add User
+                        </button>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Dashboard -->
+    <div id="userDashboard" class="user-container">
+        <header>
+            <div class="header-left">
+                <div class="user-profile">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <h4 id="userName">User</h4>
+                        <p id="userEmail">user@example.com</p>
+                    </div>
+                </div>
+            </div>
+            <button id="userLogoutBtn" class="btn btn-outline">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </header>
+
+        <!-- User Form -->
+        <div class="container">
+            <section class="form-section">
+                <h2><i class="fas fa-plus-circle"></i> Add Fuel Record</h2>
+                <form id="userFuelForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userGeneratorId">Generator ID *</label>
+                            <input type="text" id="userGeneratorId" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="userDate">Date *</label>
+                            <input type="date" id="userDate" required />
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userStartTime">Start Time *</label>
+                            <input type="time" id="userStartTime" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="userEndTime">End Time *</label>
+                            <input type="time" id="userEndTime" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="userRunningHours">Running Hours</label>
+                            <input type="text" id="userRunningHours" readonly placeholder="Auto-calculated" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userFuelAdded">Fuel Added (Liters) *</label>
+                            <input type="number" id="userFuelAdded" step="0.01" min="0" required />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userTechnician">Technician Name *</label>
+                        <input type="text" id="userTechnician" required />
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Record
+                    </button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Record</h3>
+                <button id="closeModal" class="close-btn">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editRecordId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editGeneratorId">Generator ID *</label>
+                        <input type="text" id="editGeneratorId" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editDate">Date *</label>
+                        <input type="date" id="editDate" required />
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStartTime">Start Time *</label>
+                        <input type="time" id="editStartTime" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editEndTime">End Time *</label>
+                        <input type="time" id="editEndTime" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editRunningHours">Running Hours</label>
+                        <input type="text" id="editRunningHours" readonly placeholder="Auto-calculated" />
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editFuelAdded">Fuel Added (Liters) *</label>
+                        <input type="number" id="editFuelAdded" step="0.01" min="0" required />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editTechnician">Technician Name *</label>
+                    <input type="text" id="editTechnician" required />
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancelEdit" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <i class="fas fa-check-circle notification-icon success"></i>
+            <span id="notificationMessage">Record saved successfully!</span>
+            <button id="closeNotification" class="close-notification">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        // Complete rewrite with fixed login/register functionality
+        (function() {
+            // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
+            const firebaseConfig = {
+  apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
+  authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
+  projectId: "generator-fuel-tracker-1aa43",
+  storageBucket: "generator-fuel-tracker-1aa43.firebasestorage.app",
+  messagingSenderId: "588123990552",
+  appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
+};
+
+            try {
+                // Check if Firebase is already initialized
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                
+                const auth = firebase.auth();
+                const db = firebase.firestore();
+
+                // DOM Elements
+                const authContainer = document.getElementById('authContainer');
+                const loginPage = document.getElementById('loginPage');
+                const registerPage = document.getElementById('registerPage');
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                const showRegister = document.getElementById('showRegister');
+                const showLogin = document.getElementById('showLogin');
+
+                // Admin Dashboard Elements
+                const adminDashboard = document.getElementById('adminDashboard');
+                const adminAvatar = document.getElementById('adminAvatar');
+                const adminName = document.getElementById('adminName');
+                const adminEmail = document.getElementById('adminEmail');
+                const adminFuelForm = document.getElementById('adminFuelForm');
+                const adminGeneratorId = document.getElementById('adminGeneratorId');
+                const adminDate = document.getElementById('adminDate');
+                const adminStartTime = document.getElementById('adminStartTime');
+                const adminEndTime = document.getElementById('adminEndTime');
+                const adminRunningHours = document.getElementById('adminRunningHours');
+                const adminFuelAdded = document.getElementById('adminFuelAdded');
+                const adminTechnician = document.getElementById('adminTechnician');
+                const adminSidebarNav = document.querySelector('.sidebar-nav');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const adminExportExcel = document.getElementById('adminExportExcel');
+                const adminPrintPdf = document.getElementById('adminPrintPdf');
+                const adminFilterGeneratorId = document.getElementById('adminFilterGeneratorId');
+                const adminFilterDateFrom = document.getElementById('adminFilterDateFrom');
+                const adminFilterDateTo = document.getElementById('adminFilterDateTo');
+                const adminClearFilters = document.getElementById('adminClearFilters');
+                const adminTableBody = document.getElementById('adminTableBody');
+                const adminNoRecords = document.getElementById('adminNoRecords');
+                const adminTotalFuel = document.getElementById('adminTotalFuel');
+                const adminTotalHours = document.getElementById('adminTotalHours');
+                const adminAvgConsumption = document.getElementById('adminAvgConsumption');
+
+                // User Dashboard Elements
+                const userDashboard = document.getElementById('userDashboard');
+                const userAvatar = document.getElementById('userAvatar');
+                const userName = document.getElementById('userName');
+                const userEmail = document.getElementById('userEmail');
+                const userFuelForm = document.getElementById('userFuelForm');
+                const userGeneratorId = document.getElementById('userGeneratorId');
+                const userDate = document.getElementById('userDate');
+                const userStartTime = document.getElementById('userStartTime');
+                const userEndTime = document.getElementById('userEndTime');
+                const userRunningHours = document.getElementById('userRunningHours');
+                const userFuelAdded = document.getElementById('userFuelAdded');
+                const userTechnician = document.getElementById('userTechnician');
+                const userLogoutBtn = document.getElementById('userLogoutBtn');
+
+                // Add New User Form
+                const addNewUserForm = document.getElementById('addNewUserForm');
+                const addUsername = document.getElementById('addUsername');
+                const addEmail = document.getElementById('addEmail');
+                const addPassword = document.getElementById('addPassword');
+                const addConfirmPassword = document.getElementById('addConfirmPassword');
+                const addRole = document.getElementById('addRole');
+
+                // Modal Elements
+                const editModal = document.getElementById('editModal');
+                const closeModal = document.getElementById('closeModal');
+                const editForm = document.getElementById('editForm');
+                const editRecordId = document.getElementById('editRecordId');
+                const editGeneratorId = document.getElementById('editGeneratorId');
+                const editDate = document.getElementById('editDate');
+                const editStartTime = document.getElementById('editStartTime');
+                const editEndTime = document.getElementById('editEndTime');
+                const editRunningHours = document.getElementById('editRunningHours');
+                const editFuelAdded = document.getElementById('editFuelAdded');
+                const editTechnician = document.getElementById('editTechnician');
+                const cancelEdit = document.getElementById('cancelEdit');
+
+                // Notification Elements
+                const notification = document.getElementById('notification');
+                const notificationMessage = document.getElementById('notificationMessage');
+                const closeNotification = document.getElementById('closeNotification');
+
+                // Application state
+                let currentUser = null;
+                let currentRole = null;
+                let fuelData = [];
+                let isOnline = navigator.onLine;
+                let currentFilteredData = [];
+
+                // Format date for display
+                function formatDate(dateString) {
+                    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    return new Date(dateString).toLocaleDateString(undefined, options);
+                }
+
+                // Format time for display
+                function formatTime(timeString) {
+                    if (!timeString) return '';
+                    const [hours, minutes] = timeString.split(':');
+                    return `${hours}:${minutes}`;
+                }
+
+                // Format number with commas and decimals
+                function formatNumber(num) {
+                    return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionSymbols: 2 });
+                }
+
+                // Format date range for display
+                function formatDateRange() {
+                    let dateRange = 'All Time';
+                    
+                    if (adminFilterDateFrom.value && adminFilterDateTo.value) {
+                        dateRange = `${formatDate(adminFilterDateFrom.value)} - ${formatDate(adminFilterDateTo.value)}`;
+                    } else if (adminFilterDateFrom.value) {
+                        dateRange = `From ${formatDate(adminFilterDateFrom.value)}`;
+                    } else if (adminFilterDateTo.value) {
+                        dateRange = `To ${formatDate(adminFilterDateTo.value)}`;
+                    }
+                    
+                    return dateRange;
+                }
+
+                // Calculate running hours from start and end times
+                function calculateRunningHours(start, end) {
+                    if (!start || !end) return '';
+                    
+                    const startParts = start.split(':');
+                    const endParts = end.split(':');
+                    
+                    const startDate = new Date();
+                    startDate.setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0);
+                    
+                    const endDate = new Date();
+                    endDate.setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0);
+                    
+                    // Handle case where end time is next day
+                    if (endDate < startDate) {
+                        endDate.setDate(endDate.getDate() + 1);
+                    }
+                    
+                    const diffMs = endDate - startDate;
+                    const diffHours = diffMs / (1000 * 60 * 60);
+                    
+                    return diffHours.toFixed(2);
+                }
+
+                // Update running hours field
+                function updateRunningHours(startTimeEl, endTimeEl, runningHoursEl) {
+                    const start = startTimeEl.value;
+                    const end = endTimeEl.value;
+                    
+                    if (start && end) {
+                        const hours = calculateRunningHours(start, end);
+                        runningHoursEl.value = `${hours} hrs`;
+                    } else {
+                        runningHoursEl.value = '';
+                    }
+                }
+
+                // Update edit form running hours
+                function updateEditRunningHours() {
+                    const start = editStartTime.value;
+                    const end = editEndTime.value;
+                    
+                    if (start && end) {
+                        const hours = calculateRunningHours(start, end);
+                        editRunningHours.value = `${hours} hrs`;
+                    } else {
+                        editRunningHours.value = '';
+                    }
+                }
+
+                // Show notification toast
+                function showNotification(message, type = 'success') {
+                    notificationMessage.textContent = message;
+                    
+                    // Set icon and color based on type
+                    const icon = notification.querySelector('.notification-icon');
+                    icon.className = 'fas fa-check-circle notification-icon';
+                    
+                    switch (type) {
+                        case 'success':
+                            notification.style.background = '#27ae60';
+                            icon.classList.add('success');
+                            break;
+                        case 'error':
+                            notification.style.background = '#e74c3c';
+                            icon.className = 'fas fa-exclamation-circle notification-icon error';
+                            break;
+                        case 'warning':
+                            notification.style.background = '#f39c12';
+                            icon.className = 'fas fa-exclamation-triangle notification-icon warning';
+                            break;
+                        case 'info':
+                            notification.style.background = '#3498db';
+                            icon.className = 'fas fa-info-circle notification-icon info';
+                            break;
+                    }
+                    
+                    // Show notification
+                    notification.classList.add('show');
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(hideNotification, 5000);
+                }
+
+                // Hide notification toast
+                function hideNotification() {
+                    notification.classList.remove('show');
+                }
+
+                // Show/hide auth pages
+                function showAuthPage(page) {
+                    loginPage.classList.remove('active');
+                    registerPage.classList.remove('active');
+                    document.getElementById(page).classList.add('active');
+                }
+
+                // Show/hide dashboard based on role
+                function showDashboard(role) {
+                    authContainer.style.display = 'none';
+                    adminDashboard.style.display = 'none';
+                    userDashboard.style.display = 'none';
+                    
+                    if (role === 'admin') {
+                        adminDashboard.style.display = 'block';
+                    } else {
+                        userDashboard.style.display = 'block';
+                    }
+                }
+
+                // Set user avatar (using first letter of username)
+                function setUserAvatar(avatarElement, name) {
+                    avatarElement.textContent = name ? name.charAt(0).toUpperCase() : 'U';
+                }
+
+                // Save user data to Firestore
+                async function saveUserData(user, role) {
+                    try {
+                        await db.collection('users').doc(user.uid).set({
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName,
+                            role: role,
+                            createdAt: new Date().toISOString()
+                        });
+                        console.log('User data saved to Firestore');
+                    } catch (error) {
+                        console.error('Error saving user ', error);
+                        throw error;
+                    }
+                }
+
+                // Load user data from Firestore
+                async function loadUserData(uid) {
+                    try {
+                        const doc = await db.collection('users').doc(uid).get();
+                        if (doc.exists) {
+                            return doc.data();
+                        }
+                        return null;
+                    } catch (error) {
+                        console.error('Error loading user ', error);
+                        return null;
+                    }
+                }
+
+                // Save data to Firestore
+                async function saveToFirestore(record) {
+                    try {
+                        await db.collection('fuelRecords').add(record);
+                        console.log('Record saved to Firestore');
+                    } catch (error) {
+                        console.error('Error saving to Firestore:', error);
+                        throw error;
+                    }
+                }
+
+                // Update data in Firestore
+                async function updateFirestore(id, record) {
+                    try {
+                        await db.collection('fuelRecords').doc(id).update(record);
+                        console.log('Record updated in Firestore');
+                    } catch (error) {
+                        console.error('Error updating Firestore:', error);
+                        throw error;
+                    }
+                }
+
+                // Delete data from Firestore
+                async function deleteFromFirestore(id) {
+                    try {
+                        await db.collection('fuelRecords').doc(id).delete();
+                        console.log('Record deleted from Firestore');
+                    } catch (error) {
+                        console.error('Error deleting from Firestore:', error);
+                        throw error;
+                    }
+                }
+
+                // Load fuel data from Firestore
+                async function loadFuelData() {
+                    try {
+                        adminLoading.style.display = 'block';
+                        const snapshot = await db.collection('fuelRecords').get();
+                        fuelData = [];
+                        
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            fuelData.push({
+                                id: doc.id,
+                                generatorId: data.generatorId,
+                                date: data.date,
+                                startTime: data.startTime,
+                                endTime: data.endTime,
+                                runningHours: data.runningHours,
+                                fuelAdded: data.fuelAdded,
+                                technician: data.technician,
+                                timestamp: data.timestamp
+                            });
+                        });
+                        
+                        adminLoading.style.display = 'none';
+                        isOnline = true;
+                        applyFilters();
+                    } catch (error) {
+                        console.error('Error loading fuel ', error);
+                        adminLoading.style.display = 'none';
+                        isOnline = false;
+                        
+                        // Try to load from localStorage as fallback
+                        const cachedData = JSON.parse(localStorage.getItem('fuelData')) || [];
+                        if (cachedData.length > 0) {
+                            fuelData = cachedData;
+                            applyFilters();
+                            showNotification('Loaded data from cache (offline mode)', 'warning');
+                        } else {
+                            showNotification('No data available', 'info');
+                        }
+                    }
+                }
+
+                // Update dashboard statistics based on filtered data
+                function updateDashboard(filteredData) {
+                    if (!filteredData || filteredData.length === 0) {
+                        adminTotalFuel.textContent = '0 L';
+                        adminTotalHours.textContent = '0 hrs';
+                        adminAvgConsumption.textContent = '0 L/hr';
+                        return;
+                    }
+
+                    const totalFuelLiters = filteredData.reduce((sum, record) => sum + parseFloat(record.fuelAdded), 0);
+                    const totalRunningHours = filteredData.reduce((sum, record) => sum + parseFloat(record.runningHours), 0);
+                    const avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
+
+                    adminTotalFuel.textContent = `${formatNumber(totalFuelLiters)} L`;
+                    adminTotalHours.textContent = `${formatNumber(totalRunningHours)} hrs`;
+                    adminAvgConsumption.textContent = `${formatNumber(avgConsumptionRate)} L/hr`;
+                }
+
+                // Apply filters and render table
+                function applyFilters() {
+                    currentFilteredData = getFilteredData();
+                    
+                    // Update dashboard with filtered data
+                    updateDashboard(currentFilteredData);
+                    
+                    // Clear existing rows
+                    adminTableBody.innerHTML = '';
+                    
+                    if (currentFilteredData.length === 0) {
+                        adminNoRecords.style.display = 'block';
+                        return;
+                    }
+                    
+                    adminNoRecords.style.display = 'none';
+                    
+                    // Add rows for each record
+                    currentFilteredData.forEach(record => {
+                        const consumption = record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00';
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${record.generatorId}</td>
+                            <td>${formatDate(record.date)}</td>
+                            <td>${formatNumber(record.fuelAdded)} L</td>
+                            <td>${record.runningHours} hrs</td>
+                            <td>${consumption} L/hr</td>
+                            <td>${record.technician}</td>
+                            <td class="action-buttons">
+                                <button class="action-btn action-btn-edit" data-id="${record.id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="action-btn action-btn-delete" data-id="${record.id}">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        `;
+                        adminTableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to action buttons
+                    document.querySelectorAll('.action-btn-edit').forEach(btn => {
+                        btn.addEventListener('click', openEditModal);
+                    });
+                    
+                    document.querySelectorAll('.action-btn-delete').forEach(btn => {
+                        btn.addEventListener('click', confirmDeleteRecord);
+                    });
+                }
+
+                // Get filtered data based on current filter values
+                function getFilteredData() {
+                    return fuelData.filter(record => {
+                        // Filter by Generator ID
+                        if (adminFilterGeneratorId.value && !record.generatorId.toLowerCase().includes(adminFilterGeneratorId.value.toLowerCase())) {
+                            return false;
+                        }
+                        
+                        // Filter by date range - from date
+                        if (adminFilterDateFrom.value) {
+                            const recordDate = new Date(record.date);
+                            const fromDate = new Date(adminFilterDateFrom.value);
+                            if (recordDate < fromDate) {
+                                return false;
+                            }
+                        }
+                        
+                        // Filter by date range - to date
+                        if (adminFilterDateTo.value) {
+                            const recordDate = new Date(record.date);
+                            const toDate = new Date(adminFilterDateTo.value);
+                            // Set time to end of day for "to" date
+                            toDate.setHours(23, 59, 59, 999);
+                            if (recordDate > toDate) {
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    });
+                }
+
+                // Handle login
+                loginForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('loginEmail').value;
+                    const password = document.getElementById('loginPassword').value;
+                    
+                    try {
+                        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // Load user data
+                        const userData = await loadUserData(user.uid);
+                        if (userData) {
+                            currentUser = user;
+                            currentRole = userData.role;
+                            
+                            // Update UI
+                            if (currentRole === 'admin') {
+                                adminName.textContent = userData.displayName || userData.email;
+                                adminEmail.textContent = userData.email;
+                                setUserAvatar(adminAvatar, userData.displayName || userData.email);
+                                showDashboard('admin');
+                                loadFuelData();
+                            } else {
+                                userName.textContent = userData.displayName || userData.email;
+                                userEmail.textContent = userData.email;
+                                setUserAvatar(userAvatar, userData.displayName || userData.email);
+                                showDashboard('user');
+                            }
+                            
+                            showNotification('Logged in successfully!', 'success');
+                        } else {
+                            showNotification('User data not found. Please contact administrator.', 'error');
+                            await auth.signOut();
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        showNotification(error.message, 'error');
+                    }
+                });
+
+                // Handle registration
+                registerForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const username = document.getElementById('registerUsername').value.trim();
+                    const email = document.getElementById('registerEmail').value.trim();
+                    const password = document.getElementById('registerPassword').value;
+                    const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                    const role = document.getElementById('registerRole').value;
+                    
+                    // Validate inputs
+                    if (!username || !email || !password || !confirmPassword || !role) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showNotification('Passwords do not match.', 'error');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showNotification('Password must be at least 6 characters long.', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Create user
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // Update user profile
+                        await user.updateProfile({
+                            displayName: username
+                        });
+                        
+                        // Save user data to Firestore
+                        await saveUserData(user, role);
+                        
+                        // Update UI
+                        currentUser = user;
+                        currentRole = role;
+                        
+                        if (currentRole === 'admin') {
+                            adminName.textContent = username;
+                            adminEmail.textContent = email;
+                            setUserAvatar(adminAvatar, username);
+                            showDashboard('admin');
+                        } else {
+                            userName.textContent = username;
+                            userEmail.textContent = email;
+                            setUserAvatar(userAvatar, username);
+                            showDashboard('user');
+                        }
+                        
+                        showNotification('Registration successful! Welcome!', 'success');
+                    } catch (error) {
+                        console.error('Registration error:', error);
+                        showNotification(error.message, 'error');
+                    }
+                });
+
+                // Show register page
+                showRegister.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showAuthPage('registerPage');
+                });
+
+                // Show login page
+                showLogin.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showAuthPage('loginPage');
+                });
+
+                // Admin fuel form submission
+                adminFuelForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const genId = adminGeneratorId.value.trim();
+                    const recordDate = adminDate.value;
+                    const start = adminStartTime.value;
+                    const end = adminEndTime.value;
+                    const fuel = parseFloat(adminFuelAdded.value);
+                    const tech = adminTechnician.value.trim();
+                    
+                    // Validate times
+                    if (start && end && new Date(`1970-01-01T${end}`) < new Date(`1970-01-01T${start}`)) {
+                        showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
+                        return;
+                    }
+                    
+                    // Validate required fields
+                    if (!genId || !recordDate || !start || !end || !fuel || !tech) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate running hours
+                    const runningHrs = calculateRunningHours(start, end);
+                    
+                    // Create new record
+                    const newRecord = {
+                        generatorId: genId,
+                        date: recordDate,
+                        startTime: start,
+                        endTime: end,
+                        runningHours: parseFloat(runningHrs),
+                        fuelAdded: fuel,
+                        technician: tech,
+                        timestamp: new Date().toISOString(),
+                        createdBy: currentUser.uid
+                    };
+                    
+                    try {
+                        await saveToFirestore(newRecord);
+                        
+                        // Add to local data
+                        fuelData.push({ ...newRecord, id: Date.now().toString() });
+                        
+                        // Update localStorage cache
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Show success notification
+                        showNotification('Fuel record saved successfully!', 'success');
+                        
+                        // Reset form
+                        adminFuelForm.reset();
+                        adminRunningHours.value = '';
+                        
+                        // Refresh data
+                        loadFuelData();
+                        
+                    } catch (error) {
+                        console.error('Error saving record:', error);
+                        showNotification('Failed to save record. Please try again.', 'error');
+                    }
+                });
+
+                // User fuel form submission
+                userFuelForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const genId = userGeneratorId.value.trim();
+                    const recordDate = userDate.value;
+                    const start = userStartTime.value;
+                    const end = userEndTime.value;
+                    const fuel = parseFloat(userFuelAdded.value);
+                    const tech = userTechnician.value.trim();
+                    
+                    // Validate times
+                    if (start && end && new Date(`1970-01-01T${end}`) < new Date(`1970-01-01T${start}`)) {
+                        showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
+                        return;
+                    }
+                    
+                    // Validate required fields
+                    if (!genId || !recordDate || !start || !end || !fuel || !tech) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate running hours
+                    const runningHrs = calculateRunningHours(start, end);
+                    
+                    // Create new record
+                    const newRecord = {
+                        generatorId: genId,
+                        date: recordDate,
+                        startTime: start,
+                        endTime: end,
+                        runningHours: parseFloat(runningHrs),
+                        fuelAdded: fuel,
+                        technician: tech,
+                        timestamp: new Date().toISOString(),
+                        createdBy: currentUser.uid
+                    };
+                    
+                    try {
+                        await saveToFirestore(newRecord);
+                        
+                        // Add to local data
+                        fuelData.push({ ...newRecord, id: Date.now().toString() });
+                        
+                        // Update localStorage cache
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Show success notification
+                        showNotification('Fuel record saved successfully!', 'success');
+                        
+                        // Reset form
+                        userFuelForm.reset();
+                        userRunningHours.value = '';
+                        
+                        // Refresh data
+                        loadFuelData();
+                        
+                    } catch (error) {
+                        console.error('Error saving record:', error);
+                        showNotification('Failed to save record. Please try again.', 'error');
+                    }
+                });
+
+                // Add New User form submission
+                addNewUserForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const username = addUsername.value.trim();
+                    const email = addEmail.value.trim();
+                    const password = addPassword.value;
+                    const confirmPassword = addConfirmPassword.value;
+                    const role = addRole.value;
+                    
+                    // Validate inputs
+                    if (!username || !email || !password || !confirmPassword || !role) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showNotification('Passwords do not match.', 'error');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showNotification('Password must be at least 6 characters long.', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        // Create user
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // Update user profile
+                        await user.updateProfile({
+                            displayName: username
+                        });
+                        
+                        // Save user data to Firestore
+                        await saveUserData(user, role);
+                        
+                        // Show success notification
+                        showNotification('User created successfully!', 'success');
+                        
+                        // Reset form
+                        addNewUserForm.reset();
+                        
+                    } catch (error) {
+                        console.error('Error creating user:', error);
+                        showNotification(error.message, 'error');
+                    }
+                });
+
+                // Admin form time change handlers
+                adminStartTime.addEventListener('change', () => updateRunningHours(adminStartTime, adminEndTime, adminRunningHours));
+                adminEndTime.addEventListener('change', () => updateRunningHours(adminStartTime, adminEndTime, adminRunningHours));
+
+                // User form time change handlers
+                userStartTime.addEventListener('change', () => updateRunningHours(userStartTime, userEndTime, userRunningHours));
+                userEndTime.addEventListener('change', () => updateRunningHours(userStartTime, userEndTime, userRunningHours));
+
+                // Sidebar navigation
+                adminSidebarNav.addEventListener('click', function(e) {
+                    const target = e.target.closest('.nav-item');
+                    if (target) {
+                        // Remove active class from all items
+                        document.querySelectorAll('.nav-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        
+                        // Add active class to clicked item
+                        target.classList.add('active');
+                        
+                        // Show corresponding page
+                        const pageId = target.getAttribute('data-page');
+                        document.querySelectorAll('.content-page').forEach(page => {
+                            page.classList.remove('active');
+                        });
+                        document.getElementById(pageId).classList.add('active');
+                        
+                        // Load data if needed
+                        if (pageId === 'adminDashboardView') {
+                            loadFuelData();
+                        }
+                    }
+                });
+
+                // Logout
+                logoutBtn.addEventListener('click', async function() {
+                    try {
+                        await auth.signOut();
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                        adminDashboard.style.display = 'none';
+                        showNotification('Logged out successfully!', 'success');
+                    } catch (error) {
+                        showNotification('Error logging out. Please try again.', 'error');
+                    }
+                });
+
+                userLogoutBtn.addEventListener('click', async function() {
+                    try {
+                        await auth.signOut();
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                        userDashboard.style.display = 'none';
+                        showNotification('Logged out successfully!', 'success');
+                    } catch (error) {
+                        showNotification('Error logging out. Please try again.', 'error');
+                    }
+                });
+
+                // Clear filters
+                adminClearFilters.addEventListener('click', function() {
+                    adminFilterGeneratorId.value = '';
+                    adminFilterDateFrom.value = '';
+                    adminFilterDateTo.value = '';
+                    applyFilters();
+                    showNotification('Filters cleared', 'info');
+                });
+
+                // Add real-time filtering
+                adminFilterGeneratorId.addEventListener('input', applyFilters);
+                adminFilterDateFrom.addEventListener('change', applyFilters);
+                adminFilterDateTo.addEventListener('change', applyFilters);
+
+                // Export to Excel
+                adminExportExcel.addEventListener('click', function() {
+                    if (currentFilteredData.length === 0) {
+                        showNotification('No data to export.', 'warning');
+                        return;
+                    }
+
+                    // Prepare data for export
+                    const exportData = currentFilteredData.map(record => ({
+                        'Generator ID': record.generatorId,
+                        'Date': formatDate(record.date),
+                        'Start Time': formatTime(record.startTime),
+                        'End Time': formatTime(record.endTime),
+                        'Running Hours': record.runningHours,
+                        'Fuel Added (L)': record.fuelAdded,
+                        'Consumption (L/hr)': record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00',
+                        'Technician': record.technician
+                    }));
+
+                    // Create worksheet
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    
+                    // Create workbook
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Fuel Records');
+                    
+                    // Generate file name with current date
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    XLSX.writeFile(wb, `Generator_Fuel_Records_${dateStr}.xlsx`);
+                    
+                    showNotification('Excel export completed', 'success');
+                });
+
+                // Print to PDF
+                adminPrintPdf.addEventListener('click', function() {
+                    if (currentFilteredData.length === 0) {
+                        showNotification('No data to export.', 'warning');
+                        return;
+                    }
+
+                    // Create a new jsPDF instance
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // Add title
+                    doc.setFontSize(18);
+                    doc.text('Generator Fuel Records', 14, 20);
+                    
+                    // Add dashboard info with filtered data
+                    doc.setFontSize(12);
+                    const totalFuelLiters = currentFilteredData.reduce((sum, record) => sum + parseFloat(record.fuelAdded), 0);
+                    const totalRunningHours = currentFilteredData.reduce((sum, record) => sum + parseFloat(record.runningHours), 0);
+                    const avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
+                    
+                    doc.text(`Total Fuel Used: ${formatNumber(totalFuelLiters)} L`, 14, 30);
+                    doc.text(`Total Running Hours: ${formatNumber(totalRunningHours)} hrs`, 14, 36);
+                    doc.text(`Average Consumption: ${formatNumber(avgConsumptionRate)} L/hr`, 14, 42);
+                    
+                    // Add date duration
+                    const dateRange = formatDateRange();
+                    doc.text(`Date Duration: ${dateRange}`, 14, 48);
+                    
+                    // Prepare table data
+                    const tableData = currentFilteredData.map(record => [
+                        record.generatorId,
+                        formatDate(record.date),
+                        formatTime(record.startTime),
+                        formatTime(record.endTime),
+                        `${record.runningHours} hrs`,
+                        `${formatNumber(record.fuelAdded)} L`,
+                        `${(record.runningHours > 0 ? (record.fuelAdded / record.runningHours).toFixed(2) : '0.00')} L/hr`,
+                        record.technician
+                    ]);
+                    
+                    // Add table
+                    doc.autoTable({
+                        head: [['Generator ID', 'Date', 'Start Time', 'End Time', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
+                        body: tableData,
+                        startY: 55,
+                        theme: 'striped',
+                        styles: { fontSize: 10 },
+                        headStyles: { fillColor: [102, 126, 234] }
+                    });
+                    
+                    // Add footer
+                    const pageCount = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8);
+                        doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                    }
+                    
+                    // Save the PDF
+                    const dateStr = new Date().toISOString().slice(0, 10);
+                    doc.save(`Generator_Fuel_Records_${dateStr}.pdf`);
+                    
+                    showNotification('PDF export completed', 'success');
+                });
+
+                // Open Edit Modal
+                function openEditModal(e) {
+                    const id = e.target.getAttribute('data-id');
+                    const record = fuelData.find(r => r.id === id);
+                    
+                    if (record) {
+                        editRecordId.value = record.id;
+                        editGeneratorId.value = record.generatorId;
+                        editDate.value = record.date;
+                        editStartTime.value = record.startTime;
+                        editEndTime.value = record.endTime;
+                        editFuelAdded.value = record.fuelAdded;
+                        editTechnician.value = record.technician;
+                        
+                        // Update running hours display
+                        updateEditRunningHours();
+                        
+                        editModal.style.display = 'block';
+                    }
+                }
+
+                // Close Modal
+                function closeModalHandler() {
+                    editModal.style.display = 'none';
+                    editForm.reset();
+                }
+
+                // Confirm Delete Record
+                function confirmDeleteRecord(e) {
+                    const id = e.target.getAttribute('data-id');
+                    const record = fuelData.find(r => r.id === id);
+                    
+                    if (record) {
+                        if (confirm('Are you sure you want to delete this record?')) {
+                            deleteRecord(id);
+                        }
+                    }
+                }
+
+                // Delete Record
+                async function deleteRecord(id) {
+                    try {
+                        await deleteFromFirestore(id);
+                        
+                        // Remove from local data
+                        fuelData = fuelData.filter(record => record.id !== id);
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Update UI
+                        applyFilters();
+                        
+                        showNotification('Record deleted successfully!', 'success');
+                    } catch (error) {
+                        console.error('Error deleting record:', error);
+                        showNotification('Failed to delete record. Please try again.', 'error');
+                    }
+                }
+
+                // Edit Form Submission
+                editForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const id = editRecordId.value;
+                    const record = {
+                        generatorId: editGeneratorId.value.trim(),
+                        date: editDate.value,
+                        startTime: editStartTime.value,
+                        endTime: editEndTime.value,
+                        runningHours: parseFloat(calculateRunningHours(editStartTime.value, editEndTime.value)),
+                        fuelAdded: parseFloat(editFuelAdded.value),
+                        technician: editTechnician.value.trim(),
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    try {
+                        await updateFirestore(id, record);
+                        
+                        // Update local data
+                        const index = fuelData.findIndex(r => r.id === id);
+                        if (index !== -1) {
+                            fuelData[index] = { ...record, id };
+                        }
+                        
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Update UI
+                        applyFilters();
+                        
+                        closeModalHandler();
+                        showNotification('Record updated successfully!', 'success');
+                    } catch (error) {
+                        console.error('Error updating record:', error);
+                        showNotification('Failed to update record. Please try again.', 'error');
+                    }
+                });
+
+                // Edit form time change handlers
+                editStartTime.addEventListener('change', updateEditRunningHours);
+                editEndTime.addEventListener('change', updateEditRunningHours);
+
+                // Modal event listeners
+                closeModal.addEventListener('click', closeModalHandler);
+                cancelEdit.addEventListener('click', closeModalHandler);
+
+                // Close modal when clicking outside
+                window.addEventListener('click', function(e) {
+                    if (e.target === editModal) {
+                        closeModalHandler();
+                    }
+                });
+
+                // Close notification when clicking X
+                closeNotification.addEventListener('click', hideNotification);
+
+                // Auth state change listener
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        // User is signed in
+                        const userData = await loadUserData(user.uid);
+                        if (userData) {
+                            currentUser = user;
+                            currentRole = userData.role;
+                            
+                            // Update UI
+                            if (currentRole === 'admin') {
+                                adminName.textContent = userData.displayName || userData.email;
+                                adminEmail.textContent = userData.email;
+                                setUserAvatar(adminAvatar, userData.displayName || userData.email);
+                                showDashboard('admin');
+                                loadFuelData();
+                            } else {
+                                userName.textContent = userData.displayName || userData.email;
+                                userEmail.textContent = userData.email;
+                                setUserAvatar(userAvatar, userData.displayName || userData.email);
+                                showDashboard('user');
+                            }
+                        } else {
+                            // User exists but no data in Firestore - sign out
+                            await auth.signOut();
+                            showAuthPage('loginPage');
+                            authContainer.style.display = 'flex';
+                            showNotification('User data not found. Please contact administrator.', 'error');
+                        }
+                    } else {
+                        // User is signed out
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                    }
+                });
+
+                // Initialize the app
+                function initApp() {
+                    // Show login page by default
+                    showAuthPage('loginPage');
+                    
+                    // Check if user is already signed in
+                    const user = auth.currentUser;
+                    if (user) {
+                        // The onAuthStateChanged listener will handle this
+                    }
+                }
+
+                // Start the app
+                initApp();
+
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                // Show error message to user
+                document.body.innerHTML = `
+                    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; font-family: Arial, sans-serif;">
+                        <div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; max-width: 600px;">
+                            <h1 style="color: #e74c3c; margin-bottom: 20px;"><i class="fas fa-exclamation-triangle"></i> Configuration Error</h1>
+                            <p style="color: #333; margin-bottom: 20px;">Firebase configuration is missing or incorrect.</p>
+                            <p style="color: #7f8c8d; margin-bottom: 30px; line-height: 1.6;">
+                                Please follow these steps to fix the issue:<br><br>
+                                1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color: #667eea;">Firebase Console</a><br>
+                                2. Create a new project or select an existing one<br>
+                                3. Register your web app and get the configuration object<br>
+                                4. Replace the firebaseConfig object in script.js with your own configuration
+                            </p>
+                            <button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 1rem;">
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        })();
+    </script>
+</body>
+</html>
