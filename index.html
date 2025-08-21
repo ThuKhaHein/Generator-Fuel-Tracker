@@ -388,7 +388,7 @@
             font-size: 0.95rem;
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 11px;
             border: 1px solid #ddd;
@@ -397,7 +397,7 @@
             transition: border-color 0.3s ease;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -531,8 +531,9 @@
         /* Charts Section */
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;
+            gap: 30px;
             margin-bottom: 30px;
         }
 
@@ -892,6 +893,7 @@
             }
             .charts-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
         }
 
@@ -1151,7 +1153,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="adminGeneratorId">Generator ID *</label>
-                                <input type="text" id="adminGeneratorId" required />
+                                <select id="adminGeneratorId" required>
+                                    <option value="">Select Generator</option>
+                                    <option value="400KVA">400KVA</option>
+                                    <option value="1250KVA">1250KVA</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="adminDate">Date *</label>
@@ -1186,9 +1192,11 @@
                             <input type="text" id="adminTechnician" required />
                         </div>
                         
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Save Record
-                        </button>
+                        <div style="margin-top: 35px;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Record
+                            </button>
+                        </div>
                     </form>
                 </section>
             </div>
@@ -1269,19 +1277,19 @@
 
                     <!-- Charts -->
                     <div class="charts-grid">
-                        <div class="chart-container">
+                        <div class="chart-container" style="grid-column: span 2;">
                             <h3><i class="fas fa-chart-line"></i> Fuel Usage Over Time</h3>
                             <canvas id="lineChart"></canvas>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="grid-column: span 2;">
                             <h3><i class="fas fa-chart-bar"></i> Daily Fuel Consumption</h3>
                             <canvas id="barChart"></canvas>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 350px;">
                             <h3><i class="fas fa-chart-pie"></i> Generator Usage Distribution</h3>
                             <canvas id="pieChart"></canvas>
                         </div>
-                        <div class="chart-container">
+                        <div class="chart-container" style="height: 350px;">
                             <h3><i class="fas fa-donut"></i> Technician Contribution</h3>
                             <canvas id="doughnutChart"></canvas>
                         </div>
@@ -1467,7 +1475,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="userGeneratorId">Generator ID *</label>
-                            <input type="text" id="userGeneratorId" required />
+                            <select id="userGeneratorId" required>
+                                <option value="">Select Generator</option>
+                                <option value="400KVA">400KVA</option>
+                                <option value="1250KVA">1250KVA</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="userDate">Date *</label>
@@ -1502,9 +1514,11 @@
                         <input type="text" id="userTechnician" required />
                     </div>
                     
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Record
-                    </button>
+                    <div style="margin-top: 35px;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Record
+                        </button>
+                    </div>
                 </form>
             </section>
         </div>
@@ -1522,7 +1536,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="editGeneratorId">Generator ID *</label>
-                        <input type="text" id="editGeneratorId" required />
+                        <select id="editGeneratorId" required>
+                            <option value="">Select Generator</option>
+                            <option value="400KVA">400KVA</option>
+                            <option value="1250KVA">1250KVA</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="editDate">Date *</label>
@@ -1575,7 +1593,7 @@
     </div>
 
     <script>
-        // Complete rewrite with properly functioning pie and donut charts
+        // Complete rewrite with fixed syntax errors
         (function() {
             // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
             const firebaseConfig = {
@@ -1586,7 +1604,6 @@
   messagingSenderId: "588123990552",
   appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
 };
-
 
             try {
                 // Check if Firebase is already initialized
@@ -2159,7 +2176,7 @@
                     return filtered;
                 }
 
-                // Render dashboard charts with properly functioning pie and donut charts
+                // Render dashboard charts with proper syntax
                 function renderDashboardCharts() {
                     if (currentFilteredData.length === 0) {
                         // Clear charts
@@ -2353,7 +2370,10 @@
                                     display: false,
                                 }
                             },
-                            cutout: '0%'
+                            cutout: '0%',
+                            layout: {
+                                padding: 20
+                            }
                         }
                     });
                     
@@ -2362,6 +2382,7 @@
                     }
                     
                     dashboardCharts.pie.data.datasets = [{
+                        label: 'Fuel Used (L)',
                         data: usageByGenerator,
                         backgroundColor: [
                             '#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c'
@@ -2420,7 +2441,10 @@
                                     display: false,
                                 }
                             },
-                            cutout: '60%'
+                            cutout: '60%',
+                            layout: {
+                                padding: 20
+                            }
                         }
                     });
                     
@@ -2429,6 +2453,7 @@
                     }
                     
                     dashboardCharts.doughnut.data.datasets = [{
+                        label: 'Fuel Used (L)',
                         data: fuelByTechnician,
                         backgroundColor: [
                             '#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c', '#34495e'
