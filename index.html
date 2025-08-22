@@ -2227,7 +2227,7 @@
 
                     dashboardCharts.line = new Chart(lineChart, {
                         type: 'line',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -2264,7 +2264,7 @@
                     
                     dashboardCharts.line.data.datasets = [{
                         label: 'Fuel Used (L)',
-                         fuelDataByDate,
+                        data: fuelDataByDate,
                         borderColor: '#667eea',
                         backgroundColor: 'rgba(102, 126, 234, 0.1)',
                         tension: 0.4,
@@ -2280,7 +2280,7 @@
                     
                     dashboardCharts.bar = new Chart(barChart, {
                         type: 'bar',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -2317,7 +2317,7 @@
                     
                     dashboardCharts.bar.data.datasets = [{
                         label: 'Fuel Used (L)',
-                         fuelDataByDate,
+                        data: fuelDataByDate,
                         backgroundColor: '#3498db',
                         borderRadius: 6
                     }];
@@ -2351,7 +2351,7 @@
 
                     dashboardCharts.pie = new Chart(pieChart, {
                         type: 'pie',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -2383,7 +2383,7 @@
                     
                     dashboardCharts.pie.data.datasets = [{
                         label: 'Fuel Used (L)',
-                         usageByGenerator,
+                        data: usageByGenerator,
                         backgroundColor: [
                             '#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c'
                         ],
@@ -2422,7 +2422,7 @@
 
                     dashboardCharts.doughnut = new Chart(doughnutChart, {
                         type: 'doughnut',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -3041,66 +3041,82 @@
                     var { jsPDF } = window.jspdf;
                     var doc = new jsPDF();
 
-                    // Add title
-                    doc.setFontSize(20);
-                    doc.text('Generator Fuel Dashboard', 14, 20);
+                    // Add background image
+                    var backgroundImg = new Image();
+                    backgroundImg.onload = function() {
+                        // Add background
+                        doc.addImage(backgroundImg, 'PNG', 0, 0, 210, 297);
+                        
+                        // Add title
+                        doc.setFontSize(20);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text('Generator Fuel Dashboard', 14, 20);
+                        
+                        // Add stats
+                        doc.setFontSize(12);
+                        doc.text('Total Fuel Used: ' + adminTotalFuel.textContent, 14, 35);
+                        doc.text('Total Running Hours: ' + adminTotalHours.textContent, 14, 42);
+                        doc.text('Average Consumption: ' + adminAvgConsumption.textContent, 14, 49);
+                        doc.text('Total Records: ' + adminTotalRecords.textContent, 14, 56);
+                        
+                        // Add date duration
+                        var dateRange = formatDateRange(adminFilterDateFrom.value, adminFilterDateTo.value);
+                        doc.text('Date Duration: ' + dateRange, 14, 63);
+                        
+                        // Add charts - Line Chart
+                        if (typeof dashboardCharts !== 'undefined' && dashboardCharts.line) {
+                            var lineImg = dashboardCharts.line.toBase64Image();
+                            doc.addImage(lineImg, 'PNG', 14, 70, 180, 80);
+                        }
+                        
+                        // Bar Chart
+                        if (typeof dashboardCharts !== 'undefined' && dashboardCharts.bar) {
+                            var barImg = dashboardCharts.bar.toBase64Image();
+                            doc.addImage(barImg, 'PNG', 14, 160, 180, 80);
+                        }
+                        
+                        // Add second page
+                        doc.addPage();
+                        
+                        // Add background for second page
+                        doc.addImage(backgroundImg, 'PNG', 0, 0, 210, 297);
+                        
+                        // Add title for second page
+                        doc.setFontSize(20);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text('Distribution Analysis', 14, 20);
+                        
+                        // Pie Chart - Generator Usage Distribution
+                        if (typeof dashboardCharts !== 'undefined' && dashboardCharts.pie) {
+                            var pieImg = dashboardCharts.pie.toBase64Image();
+                            doc.addImage(pieImg, 'PNG', 14, 30, 180, 100);
+                        }
+                        
+                        // Doughnut Chart - Technician Contribution
+                        if (typeof dashboardCharts !== 'undefined' && dashboardCharts.doughnut) {
+                            var doughnutImg = dashboardCharts.doughnut.toBase64Image();
+                            doc.addImage(doughnutImg, 'PNG', 14, 140, 180, 100);
+                        }
+                        
+                        // Add footer for both pages
+                        var pageCount = doc.internal.getNumberOfPages();
+                        for (var i = 1; i <= pageCount; i++) {
+                            doc.setPage(i);
+                            doc.setFontSize(8);
+                            doc.setTextColor(255, 255, 255);
+                            doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
+                            doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                        }
+                        
+                        // Save the PDF
+                        var dateStr = new Date().toISOString().slice(0, 10);
+                        doc.save('Generator_Fuel_Dashboard_' + dateStr + '.pdf');
+                        
+                        showNotification('PDF export completed', 'success');
+                    };
                     
-                    // Add stats
-                    doc.setFontSize(12);
-                    doc.text('Total Fuel Used: ' + adminTotalFuel.textContent, 14, 35);
-                    doc.text('Total Running Hours: ' + adminTotalHours.textContent, 14, 42);
-                    doc.text('Average Consumption: ' + adminAvgConsumption.textContent, 14, 49);
-                    doc.text('Total Records: ' + adminTotalRecords.textContent, 14, 56);
-                    
-                    // Add date duration
-                    var dateRange = formatDateRange(adminFilterDateFrom.value, adminFilterDateTo.value);
-                    doc.text('Date Duration: ' + dateRange, 14, 63);
-                    
-                    // Add charts - Line Chart
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.line) {
-                        var lineImg = dashboardCharts.line.toBase64Image();
-                        doc.addImage(lineImg, 'PNG', 14, 70, 180, 80);
-                    }
-                    
-                    // Bar Chart
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.bar) {
-                        var barImg = dashboardCharts.bar.toBase64Image();
-                        doc.addImage(barImg, 'PNG', 14, 160, 180, 80);
-                    }
-                    
-                    // Add second page
-                    doc.addPage();
-                    
-                    // Add title for second page
-                    doc.setFontSize(20);
-                    doc.text('Distribution Analysis', 14, 20);
-                    
-                    // Pie Chart - Generator Usage Distribution
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.pie) {
-                        var pieImg = dashboardCharts.pie.toBase64Image();
-                        doc.addImage(pieImg, 'PNG', 14, 30, 180, 100);
-                    }
-                    
-                    // Doughnut Chart - Technician Contribution
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.doughnut) {
-                        var doughnutImg = dashboardCharts.doughnut.toBase64Image();
-                        doc.addImage(doughnutImg, 'PNG', 14, 140, 180, 100);
-                    }
-                    
-                    // Add footer for both pages
-                    var pageCount = doc.internal.getNumberOfPages();
-                    for (var i = 1; i <= pageCount; i++) {
-                        doc.setPage(i);
-                        doc.setFontSize(8);
-                        doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
-                        doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-                    }
-                    
-                    // Save the PDF
-                    var dateStr = new Date().toISOString().slice(0, 10);
-                    doc.save('Generator_Fuel_Dashboard_' + dateStr + '.pdf');
-                    
-                    showNotification('PDF export completed', 'success');
+                    // Set the background image source
+                    backgroundImg.src = 'https://placehold.co/210x297/1e3a8a/ffffff?text=Blue+Yellow+Geometric+Border';
                 });
 
                 // Print to PDF (Records)
@@ -3114,60 +3130,72 @@
                     var { jsPDF } = window.jspdf;
                     var doc = new jsPDF();
 
-                    // Add title
-                    doc.setFontSize(20);
-                    doc.text('Generator Fuel Records', 14, 20);
+                    // Add background image
+                    var backgroundImg = new Image();
+                    backgroundImg.onload = function() {
+                        // Add background
+                        doc.addImage(backgroundImg, 'PNG', 0, 0, 210, 297);
+                        
+                        // Add title
+                        doc.setFontSize(20);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text('Generator Fuel Records', 14, 20);
+                        
+                        // Add stats
+                        doc.setFontSize(12);
+                        doc.text('Total Fuel Used: ' + recordTotalFuel.textContent, 14, 35);
+                        doc.text('Total Running Hours: ' + recordTotalHours.textContent, 14, 42);
+                        doc.text('Average Consumption: ' + recordAvgConsumption.textContent, 14, 49);
+                        doc.text('Total Records: ' + recordTotalRecords.textContent, 14, 56);
+                        
+                        // Add date duration
+                        var dateRange = formatDateRange(recordFilterDateFrom.value, recordFilterDateTo.value);
+                        doc.text('Date Duration: ' + dateRange, 14, 63);
+                        
+                        // Prepare table data
+                        var tableData = [];
+                        for (var i = 0; i < currentFilteredData.length; i++) {
+                            tableData.push([
+                                currentFilteredData[i].generatorId,
+                                formatDate(currentFilteredData[i].date),
+                                formatTime(currentFilteredData[i].startTime),
+                                formatTime(currentFilteredData[i].endTime),
+                                currentFilteredData[i].runningHours + ' hrs',
+                                formatNumber(currentFilteredData[i].fuelAdded) + ' L',
+                                (currentFilteredData[i].runningHours > 0 ? (currentFilteredData[i].fuelAdded / currentFilteredData[i].runningHours).toFixed(2) : '0.00') + ' L/hr',
+                                currentFilteredData[i].technician
+                            ]);
+                        }
+                        
+                        // Add table
+                        doc.autoTable({
+                            head: [['Generator ID', 'Date', 'Start Time', 'End Time', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
+                            body: tableData,
+                            startY: 70,
+                            theme: 'striped',
+                            styles: { fontSize: 10 },
+                            headStyles: { fillColor: [102, 126, 234] }
+                        });
+                        
+                        // Add footer
+                        var pageCount = doc.internal.getNumberOfPages();
+                        for (var i = 1; i <= pageCount; i++) {
+                            doc.setPage(i);
+                            doc.setFontSize(8);
+                            doc.setTextColor(255, 255, 255);
+                            doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
+                            doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                        }
+                        
+                        // Save the PDF
+                        var dateStr = new Date().toISOString().slice(0, 10);
+                        doc.save('Generator_Fuel_Records_' + dateStr + '.pdf');
+                        
+                        showNotification('PDF export completed', 'success');
+                    };
                     
-                    // Add stats
-                    doc.setFontSize(12);
-                    doc.text('Total Fuel Used: ' + recordTotalFuel.textContent, 14, 35);
-                    doc.text('Total Running Hours: ' + recordTotalHours.textContent, 14, 42);
-                    doc.text('Average Consumption: ' + recordAvgConsumption.textContent, 14, 49);
-                    doc.text('Total Records: ' + recordTotalRecords.textContent, 14, 56);
-                    
-                    // Add date duration
-                    var dateRange = formatDateRange(recordFilterDateFrom.value, recordFilterDateTo.value);
-                    doc.text('Date Duration: ' + dateRange, 14, 63);
-                    
-                    // Prepare table data
-                    var tableData = [];
-                    for (var i = 0; i < currentFilteredData.length; i++) {
-                        tableData.push([
-                            currentFilteredData[i].generatorId,
-                            formatDate(currentFilteredData[i].date),
-                            formatTime(currentFilteredData[i].startTime),
-                            formatTime(currentFilteredData[i].endTime),
-                            currentFilteredData[i].runningHours + ' hrs',
-                            formatNumber(currentFilteredData[i].fuelAdded) + ' L',
-                            (currentFilteredData[i].runningHours > 0 ? (currentFilteredData[i].fuelAdded / currentFilteredData[i].runningHours).toFixed(2) : '0.00') + ' L/hr',
-                            currentFilteredData[i].technician
-                        ]);
-                    }
-                    
-                    // Add table
-                    doc.autoTable({
-                        head: [['Generator ID', 'Date', 'Start Time', 'End Time', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
-                        body: tableData,
-                        startY: 70,
-                        theme: 'striped',
-                        styles: { fontSize: 10 },
-                        headStyles: { fillColor: [102, 126, 234] }
-                    });
-                    
-                    // Add footer
-                    var pageCount = doc.internal.getNumberOfPages();
-                    for (var i = 1; i <= pageCount; i++) {
-                        doc.setPage(i);
-                        doc.setFontSize(8);
-                        doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
-                        doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
-                    }
-                    
-                    // Save the PDF
-                    var dateStr = new Date().toISOString().slice(0, 10);
-                    doc.save('Generator_Fuel_Records_' + dateStr + '.pdf');
-                    
-                    showNotification('PDF export completed', 'success');
+                    // Set the background image source
+                    backgroundImg.src = 'https://placehold.co/210x297/1e3a8a/ffffff?text=Blue+Yellow+Geometric+Border';
                 });
 
                 // Open Edit Modal
