@@ -2227,7 +2227,7 @@
 
                     dashboardCharts.line = new Chart(lineChart, {
                         type: 'line',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -2280,7 +2280,7 @@
                     
                     dashboardCharts.bar = new Chart(barChart, {
                         type: 'bar',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -2317,7 +2317,7 @@
                     
                     dashboardCharts.bar.data.datasets = [{
                         label: 'Fuel Used (L)',
-                         fuelDataByDate,
+                        data: fuelDataByDate,
                         backgroundColor: '#3498db',
                         borderRadius: 6
                     }];
@@ -2351,7 +2351,7 @@
 
                     dashboardCharts.pie = new Chart(pieChart, {
                         type: 'pie',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -2383,7 +2383,7 @@
                     
                     dashboardCharts.pie.data.datasets = [{
                         label: 'Fuel Used (L)',
-                         usageByGenerator,
+                        data: usageByGenerator,
                         backgroundColor: [
                             '#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c'
                         ],
@@ -2422,7 +2422,7 @@
 
                     dashboardCharts.doughnut = new Chart(doughnutChart, {
                         type: 'doughnut',
-                         {
+                        data: {
                             labels: [],
                             datasets: []
                         },
@@ -3335,6 +3335,8 @@
                                     setUserAvatar(userAvatar, doc.data().displayName || doc.data().email);
                                     showDashboard('user');
                                 }
+                                
+                                showNotification('Logged in successfully!', 'success');
                             } else {
                                 // User exists but no data in Firestore - sign out
                                 auth.signOut();
