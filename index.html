@@ -1015,7 +1015,32 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
-    </style>
+    
+/* ✅ Print Styles */
+@media print {
+  body {
+    background: url('Blue Yellow Modern Geometric Page Border.png') no-repeat center center;
+    background-size: cover;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sidebar, .mobile-menu-btn, .overlay, .btn {
+    display: none !important; /* Hide UI buttons/sidebar */
+  }
+
+  .main-content, .dashboard, .records-section, .form-section {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .page-header {
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
+</style>
 </head>
 <body>
     <!-- Mobile Menu Button -->
@@ -3377,6 +3402,20 @@
                 document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; font-family: Arial, sans-serif;"><div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; max-width: 600px;"><h1 style="color: #e74c3c; margin-bottom: 20px;"><i class="fas fa-exclamation-triangle"></i> Configuration Error</h1><p style="color: #333; margin-bottom: 20px;">Firebase configuration is missing or incorrect.</p><p style="color: #7f8c8d; margin-bottom: 30px; line-height: 1.6;">Please follow these steps to fix the issue:<br><br>1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color: #667eea;">Firebase Console</a><br>2. Create a new project or select an existing one<br>3. Register your web app and get the configuration object<br>4. Replace the firebaseConfig object in script.js with your own configuration</p><button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 1rem;">Retry</button></div></div>';
             }
         })();
-    </script>
+    
+// ✅ Override Print PDF buttons to use window.print()
+if (typeof adminPrintPdf !== 'undefined' && adminPrintPdf) {
+    adminPrintPdf.addEventListener('click', function() {
+        window.print();
+    });
+}
+
+if (typeof printPdf !== 'undefined' && printPdf) {
+    printPdf.addEventListener('click', function() {
+        window.print();
+    });
+}
+
+</script>
 </body>
 </html>
