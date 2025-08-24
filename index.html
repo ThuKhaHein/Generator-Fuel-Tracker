@@ -1016,28 +1016,75 @@
             to { opacity: 1; }
         }
     
-/* ✅ Print Styles with Attached Framework */
+/* === PRINT FRAME (CSS-only, no image) === */
+@page { size: A4; margin: 0; }
+:root {
+  --frame-blue: #083f7f;      /* deep navy */
+  --frame-blue-dark: #073468;
+  --frame-light: #5aa6d9;     /* light blue accent */
+  --frame-yellow: #f7bd21;    /* yellow accent */
+}
+
+/* Show the decorative frame only for print */
+.print-frame { display: none; }
 @media print {
+  html, body { height: auto; }
   body {
-    background: url('Blue Yellow Modern Geometric Page Border.png') no-repeat center center;
-    background-size: cover;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    background: white !important;
+    /* Safe area so content stays inside the frame */
+    margin: 22mm 18mm 22mm 18mm !important;
   }
 
-  .sidebar, .mobile-menu-btn, .overlay, .btn {
-    display: none !important; /* Hide UI buttons/sidebar */
+  /* Hide app chrome in print */
+  .sidebar, .mobile-menu-btn, .overlay, .btn, .button, .actions, .controls, .nav, .topbar, .footer,
+  .print-hide, button, .fa-download, .fa-print { 
+    /* Many apps use various classes; we'll hide the obvious controls */
   }
 
-  .main-content, .dashboard, .records-section, .form-section {
+  /* If your app uses specific print buttons, hide them too to avoid printing the buttons themselves */
+  #printPdf, #adminPrintPdf, .download-excel, .download-pdf { display: none !important; }
+
+  /* Remove card shadows/backgrounds that waste ink */
+  .card, .panel, .widget, .box, .tile, .main-content, .container, .content, .section,
+  .dashboard, .records-section, .form-section {
     background: transparent !important;
     box-shadow: none !important;
   }
 
-  .page-header {
-    border: none !important;
-    box-shadow: none !important;
+  /* Decorative frame replicated on every page */
+  .print-frame {
+    display: block !important;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+    pointer-events: none;
   }
+  .pf { position: absolute; background: var(--frame-blue); }
+
+  /* Thick blue bars around the edges */
+  .pf-top    { top: 0; left: 0; right: 0; height: 16mm; background: var(--frame-blue); }
+  .pf-bottom { bottom: 0; left: 0; right: 0; height: 16mm; background: var(--frame-blue-dark); }
+  .pf-left   { top: 0; bottom: 0; left: 0; width: 12mm; background: var(--frame-blue); }
+  .pf-right  { top: 0; bottom: 0; right: 0; width: 12mm; background: var(--frame-blue); }
+
+  /* Corner accents (approximation of your PNG) */
+  .corner { position: absolute; }
+  /* Top-left cluster */
+  .tl-yellow-big { width: 12mm; height: 12mm; background: var(--frame-yellow); top: 8mm; left: 8mm; }
+  .tl-light      { width: 20mm; height: 10mm; background: var(--frame-light); top: 6mm; left: 20mm; }
+  .tl-outline    { width: 24mm; height: 14mm; border: 1.6mm solid var(--frame-blue); top: 6mm; left: 20mm; box-sizing: border-box; background: transparent; }
+
+  /* Bottom-right cluster (mirrored) */
+  .br-yellow-big { width: 12mm; height: 12mm; background: var(--frame-yellow); bottom: 8mm; right: 8mm; }
+  .br-light      { width: 20mm; height: 10mm; background: var(--frame-light); bottom: 6mm; right: 20mm; }
+  .br-outline    { width: 24mm; height: 14mm; border: 1.6mm solid var(--frame-blue); bottom: 6mm; right: 20mm; box-sizing: border-box; background: transparent; }
+}
+
+/* Helpful utility to prevent breaking small cards across pages */
+@media print {
+  .no-break { break-inside: avoid-page; page-break-inside: avoid; }
 }
 
 </style>
@@ -3403,19 +3450,49 @@
             }
         })();
     
-// ✅ Override Print PDF buttons to use window.print()
-if (typeof adminPrintPdf !== 'undefined' && adminPrintPdf) {
-    adminPrintPdf.addEventListener('click', function() {
-        window.print();
+// -- Ensure Print buttons export with the decorative frame --
+(function() {
+  function attachPrint(el) {
+    if (!el) return;
+    // remove existing click listeners by cloning (safe fallback)
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+    clone.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.print();
     });
-}
-
-if (typeof printPdf !== 'undefined' && printPdf) {
-    printPdf.addEventListener('click', function() {
-        window.print();
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    attachPrint(document.getElementById('printPdf'));
+    attachPrint(document.getElementById('adminPrintPdf'));
+    // generic fallback for buttons that contain the text 'Print PDF'
+    document.querySelectorAll('button, a').forEach(function(btn) {
+      const t = (btn.textContent || '').trim().toLowerCase();
+      if (t === 'print pdf' || t === 'print' || btn.dataset?.print === 'true') {
+        btn.addEventListener('click', function(e){ e.preventDefault(); window.print(); });
+      }
     });
-}
+  });
+})();
 
 </script>
+
+<!-- PRINT DECORATIVE FRAME (CSS-only) -->
+<div class="print-frame" aria-hidden="true">
+  <div class="pf pf-top"></div>
+  <div class="pf pf-right"></div>
+  <div class="pf pf-bottom"></div>
+  <div class="pf pf-left"></div>
+
+  <!-- corner clusters to mimic the PNG -->
+  <div class="corner tl-light"></div>
+  <div class="corner tl-outline"></div>
+  <div class="corner tl-yellow-big"></div>
+
+  <div class="corner br-light"></div>
+  <div class="corner br-outline"></div>
+  <div class="corner br-yellow-big"></div>
+</div>
+
 </body>
 </html>
