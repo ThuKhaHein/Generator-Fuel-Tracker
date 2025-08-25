@@ -1240,25 +1240,58 @@
                             </div>
                         </div>
                         <div class="stat-card">
-                            <i class="fas fa-gas-pump color-purple"></i>
+                            <i class="fas fa-database color-purple"></i>
                             <div class="stat-info">
-                                <h3>Current Fuel Level</h3>
-                                <p id="adminFuelLevel">0%</p>
+                                <h3>Total Records</h3>
+                                <p id="adminTotalRecords">0</p>
                             </div>
                         </div>
                     </div>
-                </section>
-
-                <!-- Charts Section -->
-                <section class="dashboard">
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <h3><i class="fas fa-chart-bar"></i> Fuel Consumption by Generator</h3>
-                            <canvas id="adminFuelChart"></canvas>
+                    
+                    <!-- Filter Controls -->
+                    <div class="filter-container">
+                        <div class="filter-group">
+                            <div class="input-icon">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="adminFilterGeneratorId" placeholder="Search by Generator ID..." />
+                            </div>
                         </div>
-                        <div class="chart-container">
-                            <h3><i class="fas fa-chart-pie"></i> Fuel Distribution</h3>
-                            <canvas id="adminPieChart"></canvas>
+                        <div class="date-filters">
+                            <div class="filter-group">
+                                <div class="input-icon">
+                                    <i class="fas fa-calendar"></i>
+                                    <input type="date" id="adminFilterDateFrom" placeholder="From Date" />
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <div class="input-icon">
+                                    <i class="fas fa-calendar"></i>
+                                    <input type="date" id="adminFilterDateTo" placeholder="To Date" />
+                                </div>
+                            </div>
+                        </div>
+                        <button id="adminClearFilters" class="btn btn-outline btn-clear">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="charts-grid">
+                        <div class="chart-container" style="grid-column: span 2;">
+                            <h3><i class="fas fa-chart-line"></i> Fuel Usage Over Time</h3>
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                        <div class="chart-container" style="grid-column: span 2;">
+                            <h3><i class="fas fa-chart-bar"></i> Daily Fuel Consumption</h3>
+                            <canvas id="barChart"></canvas>
+                        </div>
+                        <div class="chart-container" style="height: 350px;">
+                            <h3><i class="fas fa-chart-pie"></i> Generator Usage Distribution</h3>
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                        <div class="chart-container" style="height: 350px;">
+                            <h3><i class="fas fa-donut"></i> Technician Contribution</h3>
+                            <canvas id="doughnutChart"></canvas>
                         </div>
                     </div>
                 </section>
@@ -1269,1125 +1302,2208 @@
                 <div class="page-header">
                     <h1><i class="fas fa-user-plus"></i> Add New User</h1>
                 </div>
+
                 <section class="form-section">
-                    <form id="addUserForm">
+                    <form id="addNewUserForm">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="newUsername">Username *</label>
-                                <input type="text" id="newUsername" required />
+                                <label for="addUsername">Username *</label>
+                                <input type="text" id="addUsername" required />
                             </div>
                             <div class="form-group">
-                                <label for="newEmail">Email *</label>
-                                <input type="email" id="newEmail" required />
+                                <label for="addEmail">Email *</label>
+                                <input type="email" id="addEmail" required />
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="newPassword">Password *</label>
-                                <input type="password" id="newPassword" required />
+                                <label for="addPassword">Password *</label>
+                                <input type="password" id="addPassword" required />
                             </div>
                             <div class="form-group">
-                                <label for="newConfirmPassword">Confirm Password *</label>
-                                <input type="password" id="newConfirmPassword" required />
+                                <label for="addConfirmPassword">Confirm Password *</label>
+                                <input type="password" id="addConfirmPassword" required />
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="newRole">Role *</label>
-                                <select id="newRole" required>
+                                <label for="addRole">Role *</label>
+                                <select id="addRole" required>
                                     <option value="">Select Role</option>
                                     <option value="admin">Admin</option>
                                     <option value="user">User</option>
                                 </select>
                             </div>
                         </div>
-                        <div style="margin-top: 35px;">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-user-plus"></i> Add User
-                            </button>
-                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Add User
+                        </button>
                     </form>
                 </section>
             </div>
+        </div>
+    </div>
 
-            <!-- Records Page -->
-            <div id="recordsPage" class="content-page">
-                <div class="page-header">
-                    <h1><i class="fas fa-list"></i> Fuel Records</h1>
-                    <div class="table-actions">
-                        <button id="recordsPrintPdf" class="btn btn-warning">
-                            <i class="fas fa-file-pdf"></i> Print PDF
-                        </button>
-                        <button id="recordsExportExcel" class="btn btn-success">
-                            <i class="fas fa-file-excel"></i> Export Excel
-                        </button>
-                        <button id="goToDashboard" class="btn btn-secondary">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
-                        </button>
+    <!-- Fuel Records Page (No Sidebar) -->
+    <div id="fuelRecordsPage" class="dashboard-container" style="display: none;">
+        <div class="main-content" style="margin-left: 0;">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1><i class="fas fa-table"></i> Fuel Records</h1>
+                <div class="table-actions">
+                    <button id="exportExcel" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </button>
+                    <button id="printPdf" class="btn btn-warning">
+                        <i class="fas fa-file-pdf"></i> Print PDF
+                    </button>
+                    <button id="backToDashboard" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Stats -->
+            <section class="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-fire color-orange"></i>
+                        <div class="stat-info">
+                            <h3>Total Fuel Used</h3>
+                            <p id="recordTotalFuel">0 L</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-clock color-blue"></i>
+                        <div class="stat-info">
+                            <h3>Total Running Hours</h3>
+                            <p id="recordTotalHours">0 hrs</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-chart-line color-green"></i>
+                        <div class="stat-info">
+                            <h3>Avg Consumption</h3>
+                            <p id="recordAvgConsumption">0 L/hr</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-database color-purple"></i>
+                        <div class="stat-info">
+                            <h3>Total Records</h3>
+                            <p id="recordTotalRecords">0</p>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Filters -->
-                <section class="records-section">
-                    <div class="filter-container">
+                
+                <!-- Filter Controls -->
+                <div class="filter-container">
+                    <div class="filter-group">
+                        <div class="input-icon">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="recordFilterGeneratorId" placeholder="Search by Generator ID..." />
+                        </div>
+                    </div>
+                    <div class="date-filters">
                         <div class="filter-group">
-                            <label>Search</label>
                             <div class="input-icon">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="searchInput" placeholder="Search records..." />
+                                <i class="fas fa-calendar"></i>
+                                <input type="date" id="recordFilterDateFrom" placeholder="From Date" />
                             </div>
                         </div>
                         <div class="filter-group">
-                            <label>Generator ID</label>
-                            <select id="generatorFilter">
-                                <option value="">All Generators</option>
+                            <div class="input-icon">
+                                <i class="fas fa-calendar"></i>
+                                <input type="date" id="recordFilterDateTo" placeholder="To Date" />
+                            </div>
+                        </div>
+                    </div>
+                    <button id="clearRecordFilters" class="btn btn-outline btn-clear">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+
+                <!-- Data Table -->
+                <div class="table-container">
+                    <table id="recordsTable">
+                        <thead>
+                            <tr>
+                                <th>Generator ID</th>
+                                <th>Date</th>
+                                <th>Fuel Added (L)</th>
+                                <th>Running Hours</th>
+                                <th>Consumption (L/hr)</th>
+                                <th>Technician</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <!-- Rows will be inserted here -->
+                        </tbody>
+                    </table>
+                    <p id="noRecords" class="no-records">No records found.</p>
+                    <div id="recordsLoading" class="loading">
+                        <i class="fas fa-spinner fa-spin"></i> Loading data...
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- User Dashboard -->
+    <div id="userDashboard" class="user-container">
+        <header>
+            <div class="header-left">
+                <div class="user-profile">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <h4 id="userName">User</h4>
+                        <p id="userEmail">user@example.com</p>
+                    </div>
+                </div>
+            </div>
+            <button id="userLogoutBtn" class="btn btn-outline">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </header>
+
+        <!-- User Form -->
+        <div class="container">
+            <section class="form-section">
+                <h2><i class="fas fa-plus-circle"></i> Add Fuel Record</h2>
+                <form id="userFuelForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userGeneratorId">Generator ID *</label>
+                            <select id="userGeneratorId" required>
+                                <option value="">Select Generator</option>
                                 <option value="400KVA">400KVA</option>
                                 <option value="1250KVA">1250KVA</option>
                             </select>
                         </div>
-                        <div class="filter-group">
-                            <label>Date Range</label>
-                            <div class="date-filters">
-                                <input type="date" id="startDate" />
-                                <span>to</span>
-                                <input type="date" id="endDate" />
-                            </div>
+                        <div class="form-group">
+                            <label for="userDate">Date *</label>
+                            <input type="date" id="userDate" required />
                         </div>
-                        <button id="clearFilters" class="btn btn-clear">
-                            <i class="fas fa-times"></i> Clear Filters
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userStartTime">Start Time *</label>
+                            <input type="time" id="userStartTime" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="userEndTime">End Time *</label>
+                            <input type="time" id="userEndTime" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="userRunningHours">Running Hours</label>
+                            <input type="text" id="userRunningHours" readonly placeholder="Auto-calculated" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userFuelAdded">Fuel Added (Liters) *</label>
+                            <input type="number" id="userFuelAdded" step="0.01" min="0" required />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userTechnician">Technician Name *</label>
+                        <input type="text" id="userTechnician" required />
+                    </div>
+                    
+                    <div style="margin-top: 35px;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Record
                         </button>
                     </div>
-                </section>
+                </form>
+            </section>
+        </div>
+    </div>
 
-                <!-- Records Table -->
-                <section class="records-section">
-                    <div class="table-container">
-                        <div class="loading">
-                            <i class="fas fa-spinner fa-spin"></i> Loading records...
-                        </div>
-                        <table id="recordsTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Generator ID</th>
-                                    <th>Start Time</th>
-                                    <th>End Time</th>
-                                    <th>Running Hours</th>
-                                    <th>Fuel Added (L)</th>
-                                    <th>Technician</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Records will be populated here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Record</h3>
+                <button id="closeModal" class="close-btn">&times;</button>
             </div>
+            <form id="editForm">
+                <input type="hidden" id="editRecordId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editGeneratorId">Generator ID *</label>
+                        <select id="editGeneratorId" required>
+                            <option value="">Select Generator</option>
+                            <option value="400KVA">400KVA</option>
+                            <option value="1250KVA">1250KVA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDate">Date *</label>
+                        <input type="date" id="editDate" required />
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStartTime">Start Time *</label>
+                        <input type="time" id="editStartTime" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editEndTime">End Time *</label>
+                        <input type="time" id="editEndTime" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editRunningHours">Running Hours</label>
+                        <input type="text" id="editRunningHours" readonly placeholder="Auto-calculated" />
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editFuelAdded">Fuel Added (Liters) *</label>
+                        <input type="number" id="editFuelAdded" step="0.01" min="0" required />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editTechnician">Technician Name *</label>
+                    <input type="text" id="editTechnician" required />
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancelEdit" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Record</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Notification Toast -->
     <div id="notification" class="notification">
         <div class="notification-content">
-            <i id="notificationIcon" class="notification-icon success fas fa-check-circle"></i>
-            <span id="notificationMessage">Operation completed successfully!</span>
-            <button class="close-notification">&times;</button>
+            <i class="fas fa-check-circle notification-icon success"></i>
+            <span id="notificationMessage">Record saved successfully!</span>
+            <button id="closeNotification" class="close-notification">&times;</button>
         </div>
     </div>
 
-    <!-- Firebase Configuration -->
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2i2p0UYp9hP1TvQ3p1Yv3Q3p1Yv3Q3p1Y",
-            authDomain: "generator-fuel-tracker.firebaseapp.com",
-            projectId: "generator-fuel-tracker",
-            storageBucket: "generator-fuel-tracker.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456"
-        };
+        // Complete rewrite with fixed syntax errors
+        (function() {
+            // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
+            const firebaseConfig = {
+  apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
+  authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
+  projectId: "generator-fuel-tracker-1aa43",
+  storageBucket: "generator-fuel-tracker-1aa43.firebasestorage.app",
+  messagingSenderId: "588123990552",
+  appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
+};
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-    </script>
-
-    <!-- App Script -->
-    <script>
-        // DOM Elements
-        const authContainer = document.getElementById('authContainer');
-        const loginPage = document.getElementById('loginPage');
-        const registerPage = document.getElementById('registerPage');
-        const adminDashboard = document.getElementById('adminDashboard');
-        const adminForm = document.getElementById('adminForm');
-        const adminDashboardView = document.getElementById('adminDashboardView');
-        const addNewUser = document.getElementById('addNewUser');
-        const recordsPage = document.getElementById('recordsPage');
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const overlay = document.getElementById('overlay');
-        const sidebar = document.querySelector('.sidebar');
-        const navItems = document.querySelectorAll('.nav-item');
-        const contentPages = document.querySelectorAll('.content-page');
-        const adminFuelForm = document.getElementById('adminFuelForm');
-        const adminStartTime = document.getElementById('adminStartTime');
-        const adminEndTime = document.getElementById('adminEndTime');
-        const adminRunningHours = document.getElementById('adminRunningHours');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const showRegister = document.getElementById('showRegister');
-        const showLogin = document.getElementById('showLogin');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const goToRecords = document.getElementById('goToRecords');
-        const goToDashboard = document.getElementById('goToDashboard');
-        const adminPrintPdf = document.getElementById('adminPrintPdf');
-        const recordsPrintPdf = document.getElementById('recordsPrintPdf');
-        const recordsExportExcel = document.getElementById('recordsExportExcel');
-        const notification = document.getElementById('notification');
-        const notificationMessage = document.getElementById('notificationMessage');
-        const notificationIcon = document.getElementById('notificationIcon');
-        const closeNotification = document.querySelector('.close-notification');
-        const addUserForm = document.getElementById('addUserForm');
-        const adminName = document.getElementById('adminName');
-        const adminEmail = document.getElementById('adminEmail');
-        const adminAvatar = document.getElementById('adminAvatar');
-        const searchInput = document.getElementById('searchInput');
-        const generatorFilter = document.getElementById('generatorFilter');
-        const startDate = document.getElementById('startDate');
-        const endDate = document.getElementById('endDate');
-        const clearFilters = document.getElementById('clearFilters');
-        const recordsTable = document.getElementById('recordsTable');
-        const tableLoading = document.querySelector('.table-container .loading');
-        const adminTotalFuel = document.getElementById('adminTotalFuel');
-        const adminTotalHours = document.getElementById('adminTotalHours');
-        const adminAvgConsumption = document.getElementById('adminAvgConsumption');
-        const adminFuelLevel = document.getElementById('adminFuelLevel');
-
-        // Global variables
-        let currentUser = null;
-        let fuelRecords = [];
-        let fuelChart = null;
-        let pieChart = null;
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set today's date as default
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('adminDate').value = today;
-            
-            // Initialize date filters
-            startDate.value = new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0];
-            endDate.value = today;
-            
-            // Check if user is logged in
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    showDashboard();
-                    loadUserData();
-                    loadFuelRecords();
-                } else {
-                    showAuth();
-                }
-            });
-
-            // Mobile menu toggle
-            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-            overlay.addEventListener('click', toggleMobileMenu);
-
-            // Navigation items
-            navItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    const targetPage = this.getAttribute('data-page');
-                    showContentPage(targetPage);
-                    
-                    // Update active nav item
-                    navItems.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Close mobile menu if open
-                    if (window.innerWidth <= 768) {
-                        toggleMobileMenu();
-                    }
-                });
-            });
-
-            // Auth navigation
-            showRegister.addEventListener('click', function(e) {
-                e.preventDefault();
-                showAuthPage('register');
-            });
-
-            showLogin.addEventListener('click', function(e) {
-                e.preventDefault();
-                showAuthPage('login');
-            });
-
-            // Form submissions
-            loginForm.addEventListener('submit', handleLogin);
-            registerForm.addEventListener('submit', handleRegister);
-            adminFuelForm.addEventListener('submit', handleFuelFormSubmit);
-            addUserForm.addEventListener('submit', handleAddUser);
-
-            // Calculate running hours
-            adminStartTime.addEventListener('change', calculateRunningHours);
-            adminEndTime.addEventListener('change', calculateRunningHours);
-
-            // Logout
-            logoutBtn.addEventListener('click', handleLogout);
-
-            // Navigation between pages
-            goToRecords.addEventListener('click', function() {
-                showContentPage('recordsPage');
-                navItems.forEach(nav => nav.classList.remove('active'));
-            });
-
-            goToDashboard.addEventListener('click', function() {
-                showContentPage('adminDashboardView');
-                const dashboardNav = document.querySelector('[data-page="adminDashboardView"]');
-                navItems.forEach(nav => nav.classList.remove('active'));
-                if (dashboardNav) dashboardNav.classList.add('active');
-            });
-
-            // PDF and Excel export
-            adminPrintPdf.addEventListener('click', generateDashboardPDF);
-            recordsPrintPdf.addEventListener('click', generateRecordsPDF);
-            recordsExportExcel.addEventListener('click', exportToExcel);
-
-            // Notification close
-            closeNotification.addEventListener('click', hideNotification);
-
-            // Filter events
-            searchInput.addEventListener('input', filterRecords);
-            generatorFilter.addEventListener('change', filterRecords);
-            startDate.addEventListener('change', filterRecords);
-            endDate.addEventListener('change', filterRecords);
-            clearFilters.addEventListener('click', clearAllFilters);
-        });
-
-        // Functions
-        function toggleMobileMenu() {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-            mobileMenuBtn.classList.toggle('active');
-            
-            if (mobileMenuBtn.querySelector('i').classList.contains('fa-bars')) {
-                mobileMenuBtn.querySelector('i').classList.replace('fa-bars', 'fa-times');
-            } else {
-                mobileMenuBtn.querySelector('i').classList.replace('fa-times', 'fa-bars');
-            }
-        }
-
-        function showAuth() {
-            authContainer.style.display = 'flex';
-            adminDashboard.style.display = 'none';
-            showAuthPage('login');
-        }
-
-        function showDashboard() {
-            authContainer.style.display = 'none';
-            adminDashboard.style.display = 'block';
-            showContentPage('adminForm');
-        }
-
-        function showAuthPage(page) {
-            loginPage.classList.remove('active');
-            registerPage.classList.remove('active');
-            
-            if (page === 'login') {
-                loginPage.classList.add('active');
-            } else {
-                registerPage.classList.add('active');
-            }
-        }
-
-        function showContentPage(pageId) {
-            contentPages.forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            document.getElementById(pageId).classList.add('active');
-        }
-
-        function calculateRunningHours() {
-            if (adminStartTime.value && adminEndTime.value) {
-                const start = new Date(`2000-01-01T${adminStartTime.value}`);
-                const end = new Date(`2000-01-01T${adminEndTime.value}`);
-                
-                // Handle case where end time is earlier than start time (overnight)
-                if (end < start) {
-                    end.setDate(end.getDate() + 1);
+            try {
+                // Check if Firebase is already initialized
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
                 }
                 
-                const diffMs = end - start;
-                const diffHrs = diffMs / (1000 * 60 * 60);
-                
-                adminRunningHours.value = diffHrs.toFixed(2);
-            }
-        }
+                var auth = firebase.auth();
+                var db = firebase.firestore();
 
-        function handleLogin(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    showNotification('Login successful!', 'success');
-                })
-                .catch((error) => {
-                    showNotification(error.message, 'error');
-                });
-        }
+                // DOM Elements
+                var authContainer = document.getElementById('authContainer');
+                var loginPage = document.getElementById('loginPage');
+                var registerPage = document.getElementById('registerPage');
+                var loginForm = document.getElementById('loginForm');
+                var registerForm = document.getElementById('registerForm');
+                var showRegister = document.getElementById('showRegister');
+                var showLogin = document.getElementById('showLogin');
+                var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                var overlay = document.getElementById('overlay');
 
-        function handleRegister(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('registerUsername').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('registerConfirmPassword').value;
-            const role = document.getElementById('registerRole').value;
-            
-            if (password !== confirmPassword) {
-                showNotification('Passwords do not match!', 'error');
-                return;
-            }
-            
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
+                // Admin Dashboard Elements
+                var adminDashboard = document.getElementById('adminDashboard');
+                var adminAvatar = document.getElementById('adminAvatar');
+                var adminName = document.getElementById('adminName');
+                var adminEmail = document.getElementById('adminEmail');
+                var adminFuelForm = document.getElementById('adminFuelForm');
+                var adminGeneratorId = document.getElementById('adminGeneratorId');
+                var adminDate = document.getElementById('adminDate');
+                var adminStartTime = document.getElementById('adminStartTime');
+                var adminEndTime = document.getElementById('adminEndTime');
+                var adminRunningHours = document.getElementById('adminRunningHours');
+                var adminFuelAdded = document.getElementById('adminFuelAdded');
+                var adminTechnician = document.getElementById('adminTechnician');
+                var adminSidebarNav = document.querySelector('.sidebar-nav');
+                var logoutBtn = document.getElementById('logoutBtn');
+                var adminPrintPdf = document.getElementById('adminPrintPdf');
+                var goToRecords = document.getElementById('goToRecords');
+                var adminFilterGeneratorId = document.getElementById('adminFilterGeneratorId');
+                var adminFilterDateFrom = document.getElementById('adminFilterDateFrom');
+                var adminFilterDateTo = document.getElementById('adminFilterDateTo');
+                var adminClearFilters = document.getElementById('adminClearFilters');
+                var adminTableBody = document.getElementById('adminTableBody');
+                var adminNoRecords = document.getElementById('adminNoRecords');
+                var adminTotalFuel = document.getElementById('adminTotalFuel');
+                var adminTotalHours = document.getElementById('adminTotalHours');
+                var adminAvgConsumption = document.getElementById('adminAvgConsumption');
+                var adminTotalRecords = document.getElementById('adminTotalRecords');
+
+                // Fuel Records Page Elements
+                var fuelRecordsPage = document.getElementById('fuelRecordsPage');
+                var exportExcel = document.getElementById('exportExcel');
+                var printPdf = document.getElementById('printPdf');
+                var backToDashboard = document.getElementById('backToDashboard');
+                var recordFilterGeneratorId = document.getElementById('recordFilterGeneratorId');
+                var recordFilterDateFrom = document.getElementById('recordFilterDateFrom');
+                var recordFilterDateTo = document.getElementById('recordFilterDateTo');
+                var clearRecordFilters = document.getElementById('clearRecordFilters');
+                var recordsTableBody = document.getElementById('recordsTableBody');
+                var noRecords = document.getElementById('noRecords');
+                var recordsLoading = document.getElementById('recordsLoading');
+                var recordTotalFuel = document.getElementById('recordTotalFuel');
+                var recordTotalHours = document.getElementById('recordTotalHours');
+                var recordAvgConsumption = document.getElementById('recordAvgConsumption');
+                var recordTotalRecords = document.getElementById('recordTotalRecords');
+
+                // User Dashboard Elements
+                var userDashboard = document.getElementById('userDashboard');
+                var userAvatar = document.getElementById('userAvatar');
+                var userName = document.getElementById('userName');
+                var userEmail = document.getElementById('userEmail');
+                var userFuelForm = document.getElementById('userFuelForm');
+                var userGeneratorId = document.getElementById('userGeneratorId');
+                var userDate = document.getElementById('userDate');
+                var userStartTime = document.getElementById('userStartTime');
+                var userEndTime = document.getElementById('userEndTime');
+                var userRunningHours = document.getElementById('userRunningHours');
+                var userFuelAdded = document.getElementById('userFuelAdded');
+                var userTechnician = document.getElementById('userTechnician');
+                var userLogoutBtn = document.getElementById('userLogoutBtn');
+
+                // Add New User Form
+                var addNewUserForm = document.getElementById('addNewUserForm');
+                var addUsername = document.getElementById('addUsername');
+                var addEmail = document.getElementById('addEmail');
+                var addPassword = document.getElementById('addPassword');
+                var addConfirmPassword = document.getElementById('addConfirmPassword');
+                var addRole = document.getElementById('addRole');
+
+                // Modal Elements
+                var editModal = document.getElementById('editModal');
+                var closeModal = document.getElementById('closeModal');
+                var editForm = document.getElementById('editForm');
+                var editRecordId = document.getElementById('editRecordId');
+                var editGeneratorId = document.getElementById('editGeneratorId');
+                var editDate = document.getElementById('editDate');
+                var editStartTime = document.getElementById('editStartTime');
+                var editEndTime = document.getElementById('editEndTime');
+                var editRunningHours = document.getElementById('editRunningHours');
+                var editFuelAdded = document.getElementById('editFuelAdded');
+                var editTechnician = document.getElementById('editTechnician');
+                var cancelEdit = document.getElementById('cancelEdit');
+
+                // Notification Elements
+                var notification = document.getElementById('notification');
+                var notificationMessage = document.getElementById('notificationMessage');
+                var closeNotification = document.getElementById('closeNotification');
+
+                // Chart Elements
+                var lineChart = document.getElementById('lineChart');
+                var barChart = document.getElementById('barChart');
+                var pieChart = document.getElementById('pieChart');
+                var doughnutChart = document.getElementById('doughnutChart');
+
+                // Application state
+                var currentUser = null;
+                var currentRole = null;
+                var fuelData = [];
+                var isOnline = navigator.onLine;
+                var currentFilteredData = [];
+                var dashboardCharts = {};
+                var isSidebarOpen = false;
+
+                // Format date for display
+                function formatDate(dateString) {
+                    var options = { year: 'numeric', month: 'short', day: 'numeric' };
+                    return new Date(dateString).toLocaleDateString(undefined, options);
+                }
+
+                // Format time for display
+                function formatTime(timeString) {
+                    if (!timeString) return '';
+                    var parts = timeString.split(':');
+                    return parts[0] + ':' + parts[1];
+                }
+
+                // Format number with commas and decimals
+                function formatNumber(num) {
+                    return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionSymbols: 2 });
+                }
+
+                // Format date range for display
+                function formatDateRange(fromDate, toDate) {
+                    var dateRange = 'All Time';
                     
-                    // Save additional user data to Firestore
-                    return db.collection('users').doc(user.uid).set({
-                        username: username,
-                        email: email,
-                        role: role,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                })
-                .then(() => {
-                    showNotification('Registration successful!', 'success');
-                    showAuthPage('login');
-                })
-                .catch((error) => {
-                    showNotification(error.message, 'error');
-                });
-        }
-
-        function handleFuelFormSubmit(e) {
-            e.preventDefault();
-            
-            const generatorId = document.getElementById('adminGeneratorId').value;
-            const date = document.getElementById('adminDate').value;
-            const startTime = adminStartTime.value;
-            const endTime = adminEndTime.value;
-            const runningHours = parseFloat(adminRunningHours.value);
-            const fuelAdded = parseFloat(document.getElementById('adminFuelAdded').value);
-            const technician = document.getElementById('adminTechnician').value;
-            
-            // Add record to Firestore
-            db.collection('fuelRecords').add({
-                generatorId: generatorId,
-                date: date,
-                startTime: startTime,
-                endTime: endTime,
-                runningHours: runningHours,
-                fuelAdded: fuelAdded,
-                technician: technician,
-                userId: currentUser.uid,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                showNotification('Fuel record added successfully!', 'success');
-                adminFuelForm.reset();
-                
-                // Set today's date as default
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('adminDate').value = today;
-                
-                // Reload records and charts
-                loadFuelRecords();
-            })
-            .catch((error) => {
-                showNotification(error.message, 'error');
-            });
-        }
-
-        function handleAddUser(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('newUsername').value;
-            const email = document.getElementById('newEmail').value;
-            const password = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('newConfirmPassword').value;
-            const role = document.getElementById('newRole').value;
-            
-            if (password !== confirmPassword) {
-                showNotification('Passwords do not match!', 'error');
-                return;
-            }
-            
-            // Create user with Firebase Auth
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    
-                    // Save additional user data to Firestore
-                    return db.collection('users').doc(user.uid).set({
-                        username: username,
-                        email: email,
-                        role: role,
-                        createdBy: currentUser.uid,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                })
-                .then(() => {
-                    showNotification('User added successfully!', 'success');
-                    addUserForm.reset();
-                })
-                .catch((error) => {
-                    showNotification(error.message, 'error');
-                });
-        }
-
-        function handleLogout() {
-            auth.signOut()
-                .then(() => {
-                    showNotification('Logged out successfully!', 'success');
-                })
-                .catch((error) => {
-                    showNotification(error.message, 'error');
-                });
-        }
-
-        function loadUserData() {
-            db.collection('users').doc(currentUser.uid).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        const userData = doc.data();
-                        adminName.textContent = userData.username;
-                        adminEmail.textContent = userData.email;
-                        adminAvatar.textContent = userData.username.charAt(0).toUpperCase();
+                    if (fromDate && toDate) {
+                        dateRange = formatDate(fromDate) + ' - ' + formatDate(toDate);
+                    } else if (fromDate) {
+                        dateRange = 'From ' + formatDate(fromDate);
+                    } else if (toDate) {
+                        dateRange = 'To ' + formatDate(toDate);
                     }
-                })
-                .catch((error) => {
-                    console.error("Error loading user data:", error);
-                });
-        }
-
-        function loadFuelRecords() {
-            tableLoading.style.display = 'block';
-            
-            db.collection('fuelRecords')
-                .where('userId', '==', currentUser.uid)
-                .orderBy('createdAt', 'desc')
-                .get()
-                .then((querySnapshot) => {
-                    fuelRecords = [];
-                    querySnapshot.forEach((doc) => {
-                        const record = doc.data();
-                        record.id = doc.id;
-                        fuelRecords.push(record);
-                    });
                     
-                    renderRecordsTable();
+                    return dateRange;
+                }
+
+                // Calculate running hours from start and end times
+                function calculateRunningHours(start, end) {
+                    if (!start || !end) return '';
+                    
+                    var startParts = start.split(':');
+                    var endParts = end.split(':');
+                    
+                    var startDate = new Date();
+                    startDate.setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0);
+                    
+                    var endDate = new Date();
+                    endDate.setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0);
+                    
+                    // Handle case where end time is next day
+                    if (endDate < startDate) {
+                        endDate.setDate(endDate.getDate() + 1);
+                    }
+                    
+                    var diffMs = endDate - startDate;
+                    var diffHours = diffMs / (1000 * 60 * 60);
+                    
+                    return diffHours.toFixed(2);
+                }
+
+                // Update running hours field
+                function updateRunningHours(startTimeEl, endTimeEl, runningHoursEl) {
+                    var start = startTimeEl.value;
+                    var end = endTimeEl.value;
+                    
+                    if (start && end) {
+                        var hours = calculateRunningHours(start, end);
+                        runningHoursEl.value = hours + ' hrs';
+                    } else {
+                        runningHoursEl.value = '';
+                    }
+                }
+
+                // Update edit form running hours
+                function updateEditRunningHours() {
+                    var start = editStartTime.value;
+                    var end = editEndTime.value;
+                    
+                    if (start && end) {
+                        var hours = calculateRunningHours(start, end);
+                        editRunningHours.value = hours + ' hrs';
+                    } else {
+                        editRunningHours.value = '';
+                    }
+                }
+
+                // Show notification toast
+                function showNotification(message, type) {
+                    if (!type) type = 'success';
+                    
+                    notificationMessage.textContent = message;
+                    
+                    // Set icon and color based on type
+                    var icon = notification.querySelector('.notification-icon');
+                    icon.className = 'fas fa-check-circle notification-icon';
+                    
+                    switch (type) {
+                        case 'success':
+                            notification.style.background = '#27ae60';
+                            icon.classList.add('success');
+                            break;
+                        case 'error':
+                            notification.style.background = '#e74c3c';
+                            icon.className = 'fas fa-exclamation-circle notification-icon error';
+                            break;
+                        case 'warning':
+                            notification.style.background = '#f39c12';
+                            icon.className = 'fas fa-exclamation-triangle notification-icon warning';
+                            break;
+                        case 'info':
+                            notification.style.background = '#3498db';
+                            icon.className = 'fas fa-info-circle notification-icon info';
+                            break;
+                    }
+                    
+                    // Show notification
+                    notification.classList.add('show');
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(hideNotification, 5000);
+                }
+
+                // Hide notification toast
+                function hideNotification() {
+                    notification.classList.remove('show');
+                }
+
+                // Show/hide auth pages
+                function showAuthPage(page) {
+                    loginPage.classList.remove('active');
+                    registerPage.classList.remove('active');
+                    document.getElementById(page).classList.add('active');
+                }
+
+                // Show/hide dashboard based on role
+                function showDashboard(role) {
+                    authContainer.style.display = 'none';
+                    adminDashboard.style.display = 'none';
+                    userDashboard.style.display = 'none';
+                    fuelRecordsPage.style.display = 'none';
+                    
+                    if (role === 'admin') {
+                        adminDashboard.style.display = 'block';
+                    } else {
+                        userDashboard.style.display = 'block';
+                    }
+                }
+
+                // Set user avatar (using first letter of username)
+                function setUserAvatar(avatarElement, name) {
+                    avatarElement.textContent = name ? name.charAt(0).toUpperCase() : 'U';
+                }
+
+                // Save user data to Firestore
+                function saveUserData(user, role) {
+                    db.collection('users').doc(user.uid).set({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName,
+                        role: role,
+                        createdAt: new Date().toISOString()
+                    }).then(function() {
+                        console.log('User data saved to Firestore');
+                    }).catch(function(error) {
+                        console.error('Error saving user ', error);
+                    });
+                }
+
+                // Load user data from Firestore
+                function loadUserData(uid) {
+                    return db.collection('users').doc(uid).get().then(function(doc) {
+                        if (doc.exists) {
+                            return doc.data();
+                        }
+                        return null;
+                    }).catch(function(error) {
+                        console.error('Error loading user ', error);
+                        return null;
+                    });
+                }
+
+                // Save data to Firestore
+                function saveToFirestore(record) {
+                    return db.collection('fuelRecords').add(record).then(function() {
+                        console.log('Record saved to Firestore');
+                    }).catch(function(error) {
+                        console.error('Error saving to Firestore:', error);
+                        throw error;
+                    });
+                }
+
+                // Update data in Firestore
+                function updateFirestore(id, record) {
+                    return db.collection('fuelRecords').doc(id).update(record).then(function() {
+                        console.log('Record updated in Firestore');
+                    }).catch(function(error) {
+                        console.error('Error updating Firestore:', error);
+                        throw error;
+                    });
+                }
+
+                // Delete data from Firestore
+                function deleteFromFirestore(id) {
+                    return db.collection('fuelRecords').doc(id).delete().then(function() {
+                        console.log('Record deleted from Firestore');
+                    }).catch(function(error) {
+                        console.error('Error deleting from Firestore:', error);
+                        throw error;
+                    });
+                }
+
+                // Load fuel data from Firestore
+                function loadFuelData() {
+                    recordsLoading.style.display = 'block';
+                    db.collection('fuelRecords').get().then(function(snapshot) {
+                        fuelData = [];
+                        
+                        snapshot.forEach(function(doc) {
+                            var data = doc.data();
+                            fuelData.push({
+                                id: doc.id,
+                                generatorId: data.generatorId,
+                                date: data.date,
+                                startTime: data.startTime,
+                                endTime: data.endTime,
+                                runningHours: data.runningHours,
+                                fuelAdded: data.fuelAdded,
+                                technician: data.technician,
+                                timestamp: data.timestamp
+                            });
+                        });
+                        
+                        recordsLoading.style.display = 'none';
+                        isOnline = true;
+                        
+                        // Update both dashboard and records views
+                        updateDashboardStats();
+                        updateRecordsStats();
+                        applyFilters();
+                        applyRecordFilters();
+                        renderDashboardCharts();
+                    }).catch(function(error) {
+                        console.error('Error loading fuel ', error);
+                        recordsLoading.style.display = 'none';
+                        isOnline = false;
+                        
+                        // Try to load from localStorage as fallback
+                        var cachedData = JSON.parse(localStorage.getItem('fuelData')) || [];
+                        if (cachedData.length > 0) {
+                            fuelData = cachedData;
+                            updateDashboardStats();
+                            updateRecordsStats();
+                            applyFilters();
+                            applyRecordFilters();
+                            renderDashboardCharts();
+                            showNotification('Loaded data from cache (offline mode)', 'warning');
+                        } else {
+                            showNotification('No data available', 'info');
+                        }
+                    });
+                }
+
+                // Update dashboard statistics
+                function updateDashboardStats() {
+                    if (!currentFilteredData || currentFilteredData.length === 0) {
+                        adminTotalFuel.textContent = '0 L';
+                        adminTotalHours.textContent = '0 hrs';
+                        adminAvgConsumption.textContent = '0 L/hr';
+                        adminTotalRecords.textContent = '0';
+                        return;
+                    }
+
+                    var totalFuelLiters = 0;
+                    var totalRunningHours = 0;
+                    
+                    for (var i = 0; i < currentFilteredData.length; i++) {
+                        totalFuelLiters += parseFloat(currentFilteredData[i].fuelAdded);
+                        totalRunningHours += parseFloat(currentFilteredData[i].runningHours);
+                    }
+                    
+                    var avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
+
+                    adminTotalFuel.textContent = formatNumber(totalFuelLiters) + ' L';
+                    adminTotalHours.textContent = formatNumber(totalRunningHours) + ' hrs';
+                    adminAvgConsumption.textContent = formatNumber(avgConsumptionRate) + ' L/hr';
+                    adminTotalRecords.textContent = currentFilteredData.length;
+                }
+
+                // Update records page statistics
+                function updateRecordsStats() {
+                    if (!currentFilteredData || currentFilteredData.length === 0) {
+                        recordTotalFuel.textContent = '0 L';
+                        recordTotalHours.textContent = '0 hrs';
+                        recordAvgConsumption.textContent = '0 L/hr';
+                        recordTotalRecords.textContent = '0';
+                        return;
+                    }
+
+                    var totalFuelLiters = 0;
+                    var totalRunningHours = 0;
+                    
+                    for (var i = 0; i < currentFilteredData.length; i++) {
+                        totalFuelLiters += parseFloat(currentFilteredData[i].fuelAdded);
+                        totalRunningHours += parseFloat(currentFilteredData[i].runningHours);
+                    }
+                    
+                    var avgConsumptionRate = totalRunningHours > 0 ? totalFuelLiters / totalRunningHours : 0;
+
+                    recordTotalFuel.textContent = formatNumber(totalFuelLiters) + ' L';
+                    recordTotalHours.textContent = formatNumber(totalRunningHours) + ' hrs';
+                    recordAvgConsumption.textContent = formatNumber(avgConsumptionRate) + ' L/hr';
+                    recordTotalRecords.textContent = currentFilteredData.length;
+                }
+
+                // Apply filters for dashboard
+                function applyFilters() {
+                    currentFilteredData = getFilteredData();
                     updateDashboardStats();
-                    createCharts();
-                    
-                    tableLoading.style.display = 'none';
-                })
-                .catch((error) => {
-                    showNotification('Error loading fuel records: ' + error.message, 'error');
-                    tableLoading.style.display = 'none';
-                });
-        }
-
-        function renderRecordsTable() {
-            const tbody = recordsTable.querySelector('tbody');
-            tbody.innerHTML = '';
-            
-            if (fuelRecords.length === 0) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td colspan="8" class="no-records">No fuel records found</td>`;
-                tbody.appendChild(tr);
-                return;
-            }
-            
-            // Apply filters
-            let filteredRecords = [...fuelRecords];
-            
-            // Search filter
-            const searchTerm = searchInput.value.toLowerCase();
-            if (searchTerm) {
-                filteredRecords = filteredRecords.filter(record => 
-                    record.technician.toLowerCase().includes(searchTerm) ||
-                    record.generatorId.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            // Generator filter
-            const generatorValue = generatorFilter.value;
-            if (generatorValue) {
-                filteredRecords = filteredRecords.filter(record => 
-                    record.generatorId === generatorValue
-                );
-            }
-            
-            // Date range filter
-            const startDateValue = startDate.value;
-            const endDateValue = endDate.value;
-            if (startDateValue && endDateValue) {
-                filteredRecords = filteredRecords.filter(record => {
-                    const recordDate = new Date(record.date);
-                    const start = new Date(startDateValue);
-                    const end = new Date(endDateValue);
-                    end.setDate(end.getDate() + 1); // Include end date
-                    
-                    return recordDate >= start && recordDate < end;
-                });
-            }
-            
-            // Render filtered records
-            filteredRecords.forEach(record => {
-                const tr = document.createElement('tr');
-                
-                tr.innerHTML = `
-                    <td>${formatDate(record.date)}</td>
-                    <td>${record.generatorId}</td>
-                    <td>${record.startTime}</td>
-                    <td>${record.endTime}</td>
-                    <td>${record.runningHours.toFixed(2)}</td>
-                    <td>${record.fuelAdded.toFixed(2)}</td>
-                    <td>${record.technician}</td>
-                    <td class="action-buttons">
-                        <button class="action-btn action-btn-details" data-id="${record.id}">
-                            <i class="fas fa-eye"></i> View
-                        </button>
-                        <button class="action-btn action-btn-delete" data-id="${record.id}">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </td>
-                `;
-                
-                tbody.appendChild(tr);
-            });
-            
-            // Add event listeners to action buttons
-            tbody.querySelectorAll('.action-btn-details').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const recordId = this.getAttribute('data-id');
-                    viewRecordDetails(recordId);
-                });
-            });
-            
-            tbody.querySelectorAll('.action-btn-delete').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const recordId = this.getAttribute('data-id');
-                    deleteRecord(recordId);
-                });
-            });
-        }
-
-        function viewRecordDetails(recordId) {
-            const record = fuelRecords.find(r => r.id === recordId);
-            
-            if (record) {
-                // Create a modal to show record details
-                const modal = document.createElement('div');
-                modal.className = 'modal';
-                modal.style.display = 'block';
-                
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3><i class="fas fa-info-circle"></i> Record Details</h3>
-                            <button class="close-btn">&times;</button>
-                        </div>
-                        <div class="modal-body">
-                            <p><strong>Date:</strong> ${formatDate(record.date)}</p>
-                            <p><strong>Generator ID:</strong> ${record.generatorId}</p>
-                            <p><strong>Start Time:</strong> ${record.startTime}</p>
-                            <p><strong>End Time:</strong> ${record.endTime}</p>
-                            <p><strong>Running Hours:</strong> ${record.runningHours.toFixed(2)} hours</p>
-                            <p><strong>Fuel Added:</strong> ${record.fuelAdded.toFixed(2)} liters</p>
-                            <p><strong>Technician:</strong> ${record.technician}</p>
-                        </div>
-                        <div class="modal-actions">
-                            <button class="btn btn-outline" id="closeModal">Close</button>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(modal);
-                
-                // Close modal events
-                modal.querySelector('.close-btn').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                });
-                
-                modal.querySelector('#closeModal').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                });
-                
-                // Close modal when clicking outside
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        document.body.removeChild(modal);
-                    }
-                });
-            }
-        }
-
-        function deleteRecord(recordId) {
-            if (confirm('Are you sure you want to delete this record?')) {
-                db.collection('fuelRecords').doc(recordId).delete()
-                    .then(() => {
-                        showNotification('Record deleted successfully!', 'success');
-                        loadFuelRecords();
-                    })
-                    .catch((error) => {
-                        showNotification('Error deleting record: ' + error.message, 'error');
-                    });
-            }
-        }
-
-        function updateDashboardStats() {
-            if (fuelRecords.length === 0) {
-                adminTotalFuel.textContent = '0 L';
-                adminTotalHours.textContent = '0 hrs';
-                adminAvgConsumption.textContent = '0 L/hr';
-                adminFuelLevel.textContent = '0%';
-                return;
-            }
-            
-            // Calculate totals
-            const totalFuel = fuelRecords.reduce((sum, record) => sum + record.fuelAdded, 0);
-            const totalHours = fuelRecords.reduce((sum, record) => sum + record.runningHours, 0);
-            const avgConsumption = totalFuel / totalHours;
-            
-            // Update DOM
-            adminTotalFuel.textContent = `${totalFuel.toFixed(2)} L`;
-            adminTotalHours.textContent = `${totalHours.toFixed(2)} hrs`;
-            adminAvgConsumption.textContent = `${avgConsumption.toFixed(2)} L/hr`;
-            
-            // Simulate fuel level (this would normally come from sensor data)
-            const fuelLevel = Math.min(100, Math.max(0, 100 - (totalFuel % 1000) / 10));
-            adminFuelLevel.textContent = `${fuelLevel.toFixed(0)}%`;
-        }
-
-        function createCharts() {
-            // Destroy existing charts if they exist
-            if (fuelChart) {
-                fuelChart.destroy();
-            }
-            if (pieChart) {
-                pieChart.destroy();
-            }
-            
-            if (fuelRecords.length === 0) {
-                return;
-            }
-            
-            // Group fuel consumption by generator
-            const fuelByGenerator = {};
-            fuelRecords.forEach(record => {
-                if (!fuelByGenerator[record.generatorId]) {
-                    fuelByGenerator[record.generatorId] = 0;
+                    renderDashboardCharts();
                 }
-                fuelByGenerator[record.generatorId] += record.fuelAdded;
-            });
-            
-            // Create bar chart
-            const fuelCtx = document.getElementById('adminFuelChart').getContext('2d');
-            fuelChart = new Chart(fuelCtx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(fuelByGenerator),
-                    datasets: [{
-                        label: 'Fuel Consumption (Liters)',
-                        data: Object.values(fuelByGenerator),
-                        backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Liters'
+
+                // Get filtered data for dashboard
+                function getFilteredData() {
+                    var filtered = [];
+                    
+                    for (var i = 0; i < fuelData.length; i++) {
+                        var include = true;
+                        
+                        // Filter by Generator ID
+                        if (adminFilterGeneratorId.value && 
+                            !fuelData[i].generatorId.toLowerCase().includes(adminFilterGeneratorId.value.toLowerCase())) {
+                            include = false;
+                        }
+                        
+                        // Filter by date range - from date
+                        if (adminFilterDateFrom.value) {
+                            var recordDate = new Date(fuelData[i].date);
+                            var fromDate = new Date(adminFilterDateFrom.value);
+                            if (recordDate < fromDate) {
+                                include = false;
                             }
                         }
+                        
+                        // Filter by date range - to date
+                        if (adminFilterDateTo.value) {
+                            var recordDate = new Date(fuelData[i].date);
+                            var toDate = new Date(adminFilterDateTo.value);
+                            // Set time to end of day for "to" date
+                            toDate.setHours(23, 59, 59, 999);
+                            if (recordDate > toDate) {
+                                include = false;
+                            }
+                        }
+                        
+                        if (include) {
+                            filtered.push(fuelData[i]);
+                        }
+                    }
+                    
+                    return filtered;
+                }
+
+                // Apply record filters
+                function applyRecordFilters() {
+                    var filteredData = getRecordFilteredData();
+                    currentFilteredData = filteredData;
+                    
+                    // Clear existing rows
+                    recordsTableBody.innerHTML = '';
+                    
+                    if (filteredData.length === 0) {
+                        noRecords.style.display = 'block';
+                        return;
+                    }
+                    
+                    noRecords.style.display = 'none';
+                    
+                    // Add rows for each record
+                    for (var i = 0; i < filteredData.length; i++) {
+                        var consumption = filteredData[i].runningHours > 0 ? (filteredData[i].fuelAdded / filteredData[i].runningHours).toFixed(2) : '0.00';
+                        var row = document.createElement('tr');
+                        row.innerHTML = '<td>' + filteredData[i].generatorId + '</td>' +
+                                       '<td>' + formatDate(filteredData[i].date) + '</td>' +
+                                       '<td>' + formatNumber(filteredData[i].fuelAdded) + ' L</td>' +
+                                       '<td>' + filteredData[i].runningHours + ' hrs</td>' +
+                                       '<td>' + consumption + ' L/hr</td>' +
+                                       '<td>' + filteredData[i].technician + '</td>' +
+                                       '<td class="action-buttons">' +
+                                       '<button class="action-btn action-btn-edit" data-id="' + filteredData[i].id + '">' +
+                                       '<i class="fas fa-edit"></i> Edit</button>' +
+                                       '<button class="action-btn action-btn-delete" data-id="' + filteredData[i].id + '">' +
+                                       '<i class="fas fa-trash"></i> Delete</button>' +
+                                       '</td>';
+                        recordsTableBody.appendChild(row);
+                    }
+                    
+                    // Add event listeners
+                    var editButtons = document.querySelectorAll('.action-btn-edit');
+                    for (var i = 0; i < editButtons.length; i++) {
+                        editButtons[i].addEventListener('click', openEditModal);
+                    }
+                    
+                    var deleteButtons = document.querySelectorAll('.action-btn-delete');
+                    for (var i = 0; i < deleteButtons.length; i++) {
+                        deleteButtons[i].addEventListener('click', confirmDeleteRecord);
+                    }
+                    
+                    // Update stats
+                    updateRecordsStats();
+                }
+
+                // Get filtered data for records table
+                function getRecordFilteredData() {
+                    var filtered = [];
+                    
+                    for (var i = 0; i < fuelData.length; i++) {
+                        var include = true;
+                        
+                        // Filter by Generator ID
+                        if (recordFilterGeneratorId.value && 
+                            !fuelData[i].generatorId.toLowerCase().includes(recordFilterGeneratorId.value.toLowerCase())) {
+                            include = false;
+                        }
+                        
+                        // Filter by date range - from date
+                        if (recordFilterDateFrom.value) {
+                            var recordDate = new Date(fuelData[i].date);
+                            var fromDate = new Date(recordFilterDateFrom.value);
+                            if (recordDate < fromDate) {
+                                include = false;
+                            }
+                        }
+                        
+                        // Filter by date range - to date
+                        if (recordFilterDateTo.value) {
+                            var recordDate = new Date(fuelData[i].date);
+                            var toDate = new Date(recordFilterDateTo.value);
+                            // Set time to end of day for "to" date
+                            toDate.setHours(23, 59, 59, 999);
+                            if (recordDate > toDate) {
+                                include = false;
+                            }
+                        }
+                        
+                        if (include) {
+                            filtered.push(fuelData[i]);
+                        }
+                    }
+                    
+                    return filtered;
+                }
+
+                // Render dashboard charts with proper syntax
+                function renderDashboardCharts() {
+                    if (currentFilteredData.length === 0) {
+                        // Clear charts
+                        if (dashboardCharts.line) {
+                            dashboardCharts.line.destroy();
+                            dashboardCharts.line = null;
+                        }
+                        if (dashboardCharts.bar) {
+                            dashboardCharts.bar.destroy();
+                            dashboardCharts.bar = null;
+                        }
+                        if (dashboardCharts.pie) {
+                            dashboardCharts.pie.destroy();
+                            dashboardCharts.pie = null;
+                        }
+                        if (dashboardCharts.doughnut) {
+                            dashboardCharts.doughnut.destroy();
+                            dashboardCharts.doughnut = null;
+                        }
+                        return;
+                    }
+
+                    // Line Chart - Fuel Usage Over Time
+                    if (dashboardCharts.line) {
+                        dashboardCharts.line.destroy();
+                    }
+                    
+                    var dates = [];
+                    var seenDates = {};
+                    for (var i = 0; i < currentFilteredData.length; i++) {
+                        if (!seenDates[currentFilteredData[i].date]) {
+                            dates.push(currentFilteredData[i].date);
+                            seenDates[currentFilteredData[i].date] = true;
+                        }
+                    }
+                    dates.sort();
+                    
+                    var fuelDataByDate = [];
+                    for (var i = 0; i < dates.length; i++) {
+                        var total = 0;
+                        for (var j = 0; j < currentFilteredData.length; j++) {
+                            if (currentFilteredData[j].date === dates[i]) {
+                                total += currentFilteredData[j].fuelAdded;
+                            }
+                        }
+                        fuelDataByDate.push(total);
+                    }
+
+                    dashboardCharts.line = new Chart(lineChart, {
+                        type: 'line',
+                        data: {
+                            labels: [],
+                            datasets: []
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: false,
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    for (var i = 0; i < dates.length; i++) {
+                        dashboardCharts.line.data.labels.push(formatDate(dates[i]));
+                    }
+                    
+                    dashboardCharts.line.data.datasets = [{
+                        label: 'Fuel Used (L)',
+                        data: fuelDataByDate,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }];
+                    
+                    dashboardCharts.line.update();
+
+                    // Bar Chart - Daily Fuel Consumption
+                    if (dashboardCharts.bar) {
+                        dashboardCharts.bar.destroy();
+                    }
+                    
+                    dashboardCharts.bar = new Chart(barChart, {
+                        type: 'bar',
+                        data: {
+                            labels: [],
+                            datasets: []
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: false,
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    for (var i = 0; i < dates.length; i++) {
+                        dashboardCharts.bar.data.labels.push(formatDate(dates[i]));
+                    }
+                    
+                    dashboardCharts.bar.data.datasets = [{
+                        label: 'Fuel Used (L)',
+                        data: fuelDataByDate,
+                        backgroundColor: '#3498db',
+                        borderRadius: 6
+                    }];
+                    
+                    dashboardCharts.bar.update();
+
+                    // Pie Chart - Generator Usage Distribution
+                    if (dashboardCharts.pie) {
+                        dashboardCharts.pie.destroy();
+                    }
+                    
+                    var generators = [];
+                    var seenGenerators = {};
+                    for (var i = 0; i < currentFilteredData.length; i++) {
+                        if (!seenGenerators[currentFilteredData[i].generatorId]) {
+                            generators.push(currentFilteredData[i].generatorId);
+                            seenGenerators[currentFilteredData[i].generatorId] = true;
+                        }
+                    }
+                    
+                    var usageByGenerator = [];
+                    for (var i = 0; i < generators.length; i++) {
+                        var total = 0;
+                        for (var j = 0; j < currentFilteredData.length; j++) {
+                            if (currentFilteredData[j].generatorId === generators[i]) {
+                                total += currentFilteredData[j].fuelAdded;
+                            }
+                        }
+                        usageByGenerator.push(total);
+                    }
+
+                    dashboardCharts.pie = new Chart(pieChart, {
+                        type: 'pie',
+                        data: {
+                            labels: [],
+                            datasets: []
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true
+                                    }
+                                },
+                                title: {
+                                    display: false,
+                                }
+                            },
+                            cutout: '0%',
+                            layout: {
+                                padding: 20
+                            }
+                        }
+                    });
+                    
+                    for (var i = 0; i < generators.length; i++) {
+                        dashboardCharts.pie.data.labels.push(generators[i]);
+                    }
+                    
+                    dashboardCharts.pie.data.datasets = [{
+                        label: 'Fuel Used (L)',
+                        data: usageByGenerator,
+                        backgroundColor: [
+                            '#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        hoverBorderWidth: 3,
+                        hoverBorderColor: '#fff'
+                    }];
+                    
+                    dashboardCharts.pie.update();
+
+                    // Doughnut Chart - Technician Contribution
+                    if (dashboardCharts.doughnut) {
+                        dashboardCharts.doughnut.destroy();
+                    }
+                    
+                    var technicians = [];
+                    var seenTechnicians = {};
+                    for (var i = 0; i < currentFilteredData.length; i++) {
+                        if (!seenTechnicians[currentFilteredData[i].technician]) {
+                            technicians.push(currentFilteredData[i].technician);
+                            seenTechnicians[currentFilteredData[i].technician] = true;
+                        }
+                    }
+                    
+                    var fuelByTechnician = [];
+                    for (var i = 0; i < technicians.length; i++) {
+                        var total = 0;
+                        for (var j = 0; j < currentFilteredData.length; j++) {
+                            if (currentFilteredData[j].technician === technicians[i]) {
+                                total += currentFilteredData[j].fuelAdded;
+                            }
+                        }
+                        fuelByTechnician.push(total);
+                    }
+
+                    dashboardCharts.doughnut = new Chart(doughnutChart, {
+                        type: 'doughnut',
+                        data: {
+                            labels: [],
+                            datasets: []
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        padding: 20,
+                                        usePointStyle: true
+                                    }
+                                },
+                                title: {
+                                    display: false,
+                                }
+                            },
+                            cutout: '60%',
+                            layout: {
+                                padding: 20
+                            }
+                        }
+                    });
+                    
+                    for (var i = 0; i < technicians.length; i++) {
+                        dashboardCharts.doughnut.data.labels.push(technicians[i]);
+                    }
+                    
+                    dashboardCharts.doughnut.data.datasets = [{
+                        label: 'Fuel Used (L)',
+                        data: fuelByTechnician,
+                        backgroundColor: [
+                            '#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6', '#1abc9c', '#34495e'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        hoverBorderWidth: 3,
+                        hoverBorderColor: '#fff'
+                    }];
+                    
+                    dashboardCharts.doughnut.update();
+                }
+
+                // Toggle sidebar
+                function toggleSidebar() {
+                    isSidebarOpen = !isSidebarOpen;
+                    
+                    if (isSidebarOpen) {
+                        document.querySelector('.sidebar').classList.add('active');
+                        overlay.classList.add('active');
+                        mobileMenuBtn.classList.add('active');
+                        mobileMenuBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    } else {
+                        document.querySelector('.sidebar').classList.remove('active');
+                        overlay.classList.remove('active');
+                        mobileMenuBtn.classList.remove('active');
+                        mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
                     }
                 }
-            });
-            
-            // Create pie chart
-            const pieCtx = document.getElementById('adminPieChart').getContext('2d');
-            pieChart = new Chart(pieCtx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(fuelByGenerator),
-                    datasets: [{
-                        data: Object.values(fuelByGenerator),
-                        backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
+
+                // Handle login
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    var email = document.getElementById('loginEmail').value;
+                    var password = document.getElementById('loginPassword').value;
+                    
+                    auth.signInWithEmailAndPassword(email, password)
+                    .then(function(userCredential) {
+                        var user = userCredential.user;
+                        
+                        // Load user data
+                        db.collection('users').doc(user.uid).get()
+                        .then(function(doc) {
+                            if (doc.exists) {
+                                currentUser = user;
+                                currentRole = doc.data().role;
+                                
+                                // Update UI
+                                if (currentRole === 'admin') {
+                                    adminName.textContent = doc.data().displayName || doc.data().email;
+                                    adminEmail.textContent = doc.data().email;
+                                    setUserAvatar(adminAvatar, doc.data().displayName || doc.data().email);
+                                    showDashboard('admin');
+                                    loadFuelData();
+                                } else {
+                                    userName.textContent = doc.data().displayName || doc.data().email;
+                                    userEmail.textContent = doc.data().email;
+                                    setUserAvatar(userAvatar, doc.data().displayName || doc.data().email);
+                                    showDashboard('user');
+                                }
+                                
+                                showNotification('Logged in successfully!', 'success');
+                            } else {
+                                showNotification('User data not found. Please contact administrator.', 'error');
+                                auth.signOut();
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('Error loading user ', error);
+                            showNotification('Failed to load user data.', 'error');
+                        });
+                    })
+                    .catch(function(error) {
+                        console.error('Login error:', error);
+                        showNotification(error.message, 'error');
+                    });
+                });
+
+                // Handle registration
+                registerForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    var username = document.getElementById('registerUsername').value.trim();
+                    var email = document.getElementById('registerEmail').value.trim();
+                    var password = document.getElementById('registerPassword').value;
+                    var confirmPassword = document.getElementById('registerConfirmPassword').value;
+                    var role = document.getElementById('registerRole').value;
+                    
+                    // Validate inputs
+                    if (!username || !email || !password || !confirmPassword || !role) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showNotification('Passwords do not match.', 'error');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showNotification('Password must be at least 6 characters long.', 'error');
+                        return;
+                    }
+                    
+                    // Create user
+                    auth.createUserWithEmailAndPassword(email, password)
+                    .then(function(userCredential) {
+                        var user = userCredential.user;
+                        
+                        // Update user profile
+                        user.updateProfile({
+                            displayName: username
+                        })
+                        .then(function() {
+                            // Save user data to Firestore
+                            db.collection('users').doc(user.uid).set({
+                                uid: user.uid,
+                                email: user.email,
+                                displayName: user.displayName,
+                                role: role,
+                                createdAt: new Date().toISOString()
+                            })
+                            .then(function() {
+                                // Update UI
+                                currentUser = user;
+                                currentRole = role;
+                                
+                                if (currentRole === 'admin') {
+                                    adminName.textContent = username;
+                                    adminEmail.textContent = email;
+                                    setUserAvatar(adminAvatar, username);
+                                    showDashboard('admin');
+                                } else {
+                                    userName.textContent = username;
+                                    userEmail.textContent = email;
+                                    setUserAvatar(userAvatar, username);
+                                    showDashboard('user');
+                                }
+                                
+                                showNotification('Registration successful! Welcome!', 'success');
+                            })
+                            .catch(function(error) {
+                                console.error('Error saving user ', error);
+                                showNotification('Failed to save user data.', 'error');
+                            });
+                        })
+                        .catch(function(error) {
+                            console.error('Error updating profile:', error);
+                            showNotification('Failed to update profile.', 'error');
+                        });
+                    })
+                    .catch(function(error) {
+                        console.error('Registration error:', error);
+                        showNotification(error.message, 'error');
+                    });
+                });
+
+                // Show register page
+                showRegister.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showAuthPage('registerPage');
+                });
+
+                // Show login page
+                showLogin.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showAuthPage('loginPage');
+                });
+
+                // Admin fuel form submission
+                adminFuelForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    var genId = adminGeneratorId.value.trim();
+                    var recordDate = adminDate.value;
+                    var start = adminStartTime.value;
+                    var end = adminEndTime.value;
+                    var fuel = parseFloat(adminFuelAdded.value);
+                    var tech = adminTechnician.value.trim();
+                    
+                    // Validate times
+                    if (start && end) {
+                        var startParts = start.split(':');
+                        var endParts = end.split(':');
+                        var startDate = new Date();
+                        startDate.setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0);
+                        var endDate = new Date();
+                        endDate.setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0);
+                        
+                        if (endDate < startDate) {
+                            endDate.setDate(endDate.getDate() + 1);
+                        }
+                        
+                        if (endDate < startDate) {
+                            showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
+                            return;
+                        }
+                    }
+                    
+                    // Validate required fields
+                    if (!genId || !recordDate || !start || !end || !fuel || !tech) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate running hours
+                    var runningHrs = calculateRunningHours(start, end);
+                    
+                    // Create new record
+                    var newRecord = {
+                        generatorId: genId,
+                        date: recordDate,
+                        startTime: start,
+                        endTime: end,
+                        runningHours: parseFloat(runningHrs),
+                        fuelAdded: fuel,
+                        technician: tech,
+                        timestamp: new Date().toISOString(),
+                        createdBy: currentUser.uid
+                    };
+                    
+                    db.collection('fuelRecords').add(newRecord)
+                    .then(function() {
+                        // Add to local data
+                        fuelData.push({ id: Date.now().toString(), generatorId: genId, date: recordDate, 
+                                       startTime: start, endTime: end, runningHours: parseFloat(runningHrs), 
+                                       fuelAdded: fuel, technician: tech, timestamp: new Date().toISOString() });
+                        
+                        // Update localStorage cache
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Show success notification
+                        showNotification('Fuel record saved successfully!', 'success');
+                        
+                        // Reset form
+                        adminFuelForm.reset();
+                        adminRunningHours.value = '';
+                        
+                        // Refresh data
+                        loadFuelData();
+                    })
+                    .catch(function(error) {
+                        console.error('Error saving record:', error);
+                        showNotification('Failed to save record. Please try again.', 'error');
+                    });
+                });
+
+                // User fuel form submission
+                userFuelForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    var genId = userGeneratorId.value.trim();
+                    var recordDate = userDate.value;
+                    var start = userStartTime.value;
+                    var end = userEndTime.value;
+                    var fuel = parseFloat(userFuelAdded.value);
+                    var tech = userTechnician.value.trim();
+                    
+                    // Validate times
+                    if (start && end) {
+                        var startParts = start.split(':');
+                        var endParts = end.split(':');
+                        var startDate = new Date();
+                        startDate.setHours(parseInt(startParts[0]), parseInt(startParts[1]), 0);
+                        var endDate = new Date();
+                        endDate.setHours(parseInt(endParts[0]), parseInt(endParts[1]), 0);
+                        
+                        if (endDate < startDate) {
+                            endDate.setDate(endDate.getDate() + 1);
+                        }
+                        
+                        if (endDate < startDate) {
+                            showNotification('End time cannot be earlier than start time (unless it crosses midnight).', 'error');
+                            return;
+                        }
+                    }
+                    
+                    // Validate required fields
+                    if (!genId || !recordDate || !start || !end || !fuel || !tech) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate running hours
+                    var runningHrs = calculateRunningHours(start, end);
+                    
+                    // Create new record
+                    var newRecord = {
+                        generatorId: genId,
+                        date: recordDate,
+                        startTime: start,
+                        endTime: end,
+                        runningHours: parseFloat(runningHrs),
+                        fuelAdded: fuel,
+                        technician: tech,
+                        timestamp: new Date().toISOString(),
+                        createdBy: currentUser.uid
+                    };
+                    
+                    db.collection('fuelRecords').add(newRecord)
+                    .then(function() {
+                        // Add to local data
+                        fuelData.push({ id: Date.now().toString(), generatorId: genId, date: recordDate, 
+                                       startTime: start, endTime: end, runningHours: parseFloat(runningHrs), 
+                                       fuelAdded: fuel, technician: tech, timestamp: new Date().toISOString() });
+                        
+                        // Update localStorage cache
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Show success notification
+                        showNotification('Fuel record saved successfully!', 'success');
+                        
+                        // Reset form
+                        userFuelForm.reset();
+                        userRunningHours.value = '';
+                        
+                        // Refresh data
+                        loadFuelData();
+                    })
+                    .catch(function(error) {
+                        console.error('Error saving record:', error);
+                        showNotification('Failed to save record. Please try again.', 'error');
+                    });
+                });
+
+                // Add New User form submission
+                addNewUserForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    var username = addUsername.value.trim();
+                    var email = addEmail.value.trim();
+                    var password = addPassword.value;
+                    var confirmPassword = addConfirmPassword.value;
+                    var role = addRole.value;
+                    
+                    // Validate inputs
+                    if (!username || !email || !password || !confirmPassword || !role) {
+                        showNotification('Please fill in all required fields.', 'error');
+                        return;
+                    }
+                    
+                    if (password !== confirmPassword) {
+                        showNotification('Passwords do not match.', 'error');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        showNotification('Password must be at least 6 characters long.', 'error');
+                        return;
+                    }
+                    
+                    // Create user
+                    auth.createUserWithEmailAndPassword(email, password)
+                    .then(function(userCredential) {
+                        var user = userCredential.user;
+                        
+                        // Update user profile
+                        user.updateProfile({
+                            displayName: username
+                        })
+                        .then(function() {
+                            // Save user data to Firestore
+                            db.collection('users').doc(user.uid).set({
+                                uid: user.uid,
+                                email: user.email,
+                                displayName: user.displayName,
+                                role: role,
+                                createdAt: new Date().toISOString()
+                            })
+                            .then(function() {
+                                showNotification('User created successfully!', 'success');
+                                addNewUserForm.reset();
+                            })
+                            .catch(function(error) {
+                                console.error('Error saving user ', error);
+                                showNotification('Failed to save user data.', 'error');
+                            });
+                        })
+                        .catch(function(error) {
+                            console.error('Error updating profile:', error);
+                            showNotification('Failed to update profile.', 'error');
+                        });
+                    })
+                    .catch(function(error) {
+                        console.error('Error creating user:', error);
+                        showNotification(error.message, 'error');
+                    });
+                });
+
+                // Admin form time change handlers
+                adminStartTime.addEventListener('change', function() {
+                    updateRunningHours(adminStartTime, adminEndTime, adminRunningHours);
+                });
+                adminEndTime.addEventListener('change', function() {
+                    updateRunningHours(adminStartTime, adminEndTime, adminRunningHours);
+                });
+
+                // User form time change handlers
+                userStartTime.addEventListener('change', function() {
+                    updateRunningHours(userStartTime, userEndTime, userRunningHours);
+                });
+                userEndTime.addEventListener('change', function() {
+                    updateRunningHours(userStartTime, userEndTime, userRunningHours);
+                });
+
+                // Sidebar navigation
+                adminSidebarNav.addEventListener('click', function(e) {
+                    var target = e.target.closest('.nav-item');
+                    if (target) {
+                        // Remove active class from all items
+                        var items = document.querySelectorAll('.nav-item');
+                        for (var i = 0; i < items.length; i++) {
+                            items[i].classList.remove('active');
+                        }
+                        
+                        // Add active class to clicked item
+                        target.classList.add('active');
+                        
+                        // Show corresponding page
+                        var pageId = target.getAttribute('data-page');
+                        var pages = document.querySelectorAll('.content-page');
+                        for (var i = 0; i < pages.length; i++) {
+                            pages[i].classList.remove('active');
+                        }
+                        document.getElementById(pageId).classList.add('active');
+                        
+                        // Load data if needed
+                        if (pageId === 'adminDashboardView') {
+                            loadFuelData();
+                        }
+                        
+                        // Close sidebar on mobile
+                        if (window.innerWidth <= 768) {
+                            toggleSidebar();
+                        }
+                    }
+                });
+
+                // Mobile menu toggle
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+
+                // Overlay click to close sidebar
+                overlay.addEventListener('click', function() {
+                    if (isSidebarOpen) {
+                        toggleSidebar();
+                    }
+                });
+
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', function(e) {
+                    if (isSidebarOpen && window.innerWidth <= 768) {
+                        var sidebar = document.querySelector('.sidebar');
+                        var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+                        
+                        if (!sidebar.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                            toggleSidebar();
+                        }
+                    }
+                });
+
+                // Close sidebar when window is resized to desktop
+                window.addEventListener('resize', function() {
+                    if (window.innerWidth > 768 && isSidebarOpen) {
+                        toggleSidebar();
+                    }
+                });
+
+                // Logout
+                logoutBtn.addEventListener('click', function() {
+                    auth.signOut()
+                    .then(function() {
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                        adminDashboard.style.display = 'none';
+                        showNotification('Logged out successfully!', 'success');
+                    })
+                    .catch(function(error) {
+                        showNotification('Error logging out. Please try again.', 'error');
+                    });
+                });
+
+                userLogoutBtn.addEventListener('click', function() {
+                    auth.signOut()
+                    .then(function() {
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                        userDashboard.style.display = 'none';
+                        showNotification('Logged out successfully!', 'success');
+                    })
+                    .catch(function(error) {
+                        showNotification('Error logging out. Please try again.', 'error');
+                    });
+                });
+
+                // Clear filters
+                adminClearFilters.addEventListener('click', function() {
+                    adminFilterGeneratorId.value = '';
+                    adminFilterDateFrom.value = '';
+                    adminFilterDateTo.value = '';
+                    applyFilters();
+                    showNotification('Filters cleared', 'info');
+                });
+
+                clearRecordFilters.addEventListener('click', function() {
+                    recordFilterGeneratorId.value = '';
+                    recordFilterDateFrom.value = '';
+                    recordFilterDateTo.value = '';
+                    applyRecordFilters();
+                    showNotification('Filters cleared', 'info');
+                });
+
+                // Add real-time filtering
+                adminFilterGeneratorId.addEventListener('input', applyFilters);
+                adminFilterDateFrom.addEventListener('change', applyFilters);
+                adminFilterDateTo.addEventListener('change', applyFilters);
+                recordFilterGeneratorId.addEventListener('input', applyRecordFilters);
+                recordFilterDateFrom.addEventListener('change', applyRecordFilters);
+                recordFilterDateTo.addEventListener('change', applyRecordFilters);
+
+                // Go to Records Page
+                goToRecords.addEventListener('click', function() {
+                    adminDashboard.style.display = 'none';
+                    fuelRecordsPage.style.display = 'block';
+                    applyRecordFilters();
+                });
+
+                // Back to Dashboard
+                backToDashboard.addEventListener('click', function() {
+                    fuelRecordsPage.style.display = 'none';
+                    adminDashboard.style.display = 'block';
+                });
+
+                // Export to Excel
+                exportExcel.addEventListener('click', function() {
+                    if (fuelData.length === 0) {
+                        showNotification('No data to export.', 'warning');
+                        return;
+                    }
+
+                    // Prepare data for export
+                    var exportData = [];
+                    for (var i = 0; i < fuelData.length; i++) {
+                        exportData.push({
+                            'Generator ID': fuelData[i].generatorId,
+                            'Date': formatDate(fuelData[i].date),
+                            'Start Time': formatTime(fuelData[i].startTime),
+                            'End Time': formatTime(fuelData[i].endTime),
+                            'Running Hours': fuelData[i].runningHours,
+                            'Fuel Added (L)': fuelData[i].fuelAdded,
+                            'Consumption (L/hr)': fuelData[i].runningHours > 0 ? (fuelData[i].fuelAdded / fuelData[i].runningHours).toFixed(2) : '0.00',
+                            'Technician': fuelData[i].technician
+                        });
+                    }
+
+                    // Create worksheet
+                    var ws = XLSX.utils.json_to_sheet(exportData);
+                    
+                    // Create workbook
+                    var wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Fuel Records');
+                    
+                    // Generate file name with current date
+                    var dateStr = new Date().toISOString().slice(0, 10);
+                    XLSX.writeFile(wb, 'Generator_Fuel_Records_' + dateStr + '.xlsx');
+                    
+                    showNotification('Excel export completed', 'success');
+                });
+
+                // Print to PDF (Dashboard) - All charts on one PDF
+                adminPrintPdf.addEventListener('click', function() {
+                    if (currentFilteredData.length === 0) {
+                        showNotification('No data to export.', 'warning');
+                        return;
+                    }
+
+                    // Create a new jsPDF instance
+                    var { jsPDF } = window.jspdf;
+                    var doc = new jsPDF();
+
+                    // Add title
+                    doc.setFontSize(20);
+                    doc.text('Generator Fuel Dashboard', 14, 20);
+                    
+                    // Add stats
+                    doc.setFontSize(12);
+                    doc.text('Total Fuel Used: ' + adminTotalFuel.textContent, 14, 35);
+                    doc.text('Total Running Hours: ' + adminTotalHours.textContent, 14, 42);
+                    doc.text('Average Consumption: ' + adminAvgConsumption.textContent, 14, 49);
+                    doc.text('Total Records: ' + adminTotalRecords.textContent, 14, 56);
+                    
+                    // Add date duration
+                    var dateRange = formatDateRange(adminFilterDateFrom.value, adminFilterDateTo.value);
+                    doc.text('Date Duration: ' + dateRange, 14, 63);
+                    
+                    // Add charts - Line Chart
+                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.line) {
+                        var lineImg = dashboardCharts.line.toBase64Image();
+                        doc.addImage(lineImg, 'PNG', 14, 70, 180, 80);
+                    }
+                    
+                    // Bar Chart
+                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.bar) {
+                        var barImg = dashboardCharts.bar.toBase64Image();
+                        doc.addImage(barImg, 'PNG', 14, 160, 180, 80);
+                    }
+                    
+                    // Add second page
+                    doc.addPage();
+                    
+                    // Add title for second page
+                    doc.setFontSize(20);
+                    doc.text('Distribution Analysis', 14, 20);
+                    
+                    // Pie Chart - Generator Usage Distribution
+                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.pie) {
+                        var pieImg = dashboardCharts.pie.toBase64Image();
+                        doc.addImage(pieImg, 'PNG', 14, 30, 180, 100);
+                    }
+                    
+                    // Doughnut Chart - Technician Contribution
+                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.doughnut) {
+                        var doughnutImg = dashboardCharts.doughnut.toBase64Image();
+                        doc.addImage(doughnutImg, 'PNG', 14, 140, 180, 100);
+                    }
+                    
+                    // Add footer for both pages
+                    var pageCount = doc.internal.getNumberOfPages();
+                    for (var i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8);
+                        doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
+                        doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                    }
+                    
+                    // Save the PDF
+                    var dateStr = new Date().toISOString().slice(0, 10);
+                    doc.save('Generator_Fuel_Dashboard_' + dateStr + '.pdf');
+                    
+                    showNotification('PDF export completed', 'success');
+                });
+
+                // Print to PDF (Records)
+                printPdf.addEventListener('click', function() {
+                    if (currentFilteredData.length === 0) {
+                        showNotification('No data to export.', 'warning');
+                        return;
+                    }
+
+                    // Create a new jsPDF instance
+                    var { jsPDF } = window.jspdf;
+                    var doc = new jsPDF();
+
+                    // Add title
+                    doc.setFontSize(20);
+                    doc.text('Generator Fuel Records', 14, 20);
+                    
+                    // Add stats
+                    doc.setFontSize(12);
+                    doc.text('Total Fuel Used: ' + recordTotalFuel.textContent, 14, 35);
+                    doc.text('Total Running Hours: ' + recordTotalHours.textContent, 14, 42);
+                    doc.text('Average Consumption: ' + recordAvgConsumption.textContent, 14, 49);
+                    doc.text('Total Records: ' + recordTotalRecords.textContent, 14, 56);
+                    
+                    // Add date duration
+                    var dateRange = formatDateRange(recordFilterDateFrom.value, recordFilterDateTo.value);
+                    doc.text('Date Duration: ' + dateRange, 14, 63);
+                    
+                    // Prepare table data
+                    var tableData = [];
+                    for (var i = 0; i < currentFilteredData.length; i++) {
+                        tableData.push([
+                            currentFilteredData[i].generatorId,
+                            formatDate(currentFilteredData[i].date),
+                            formatTime(currentFilteredData[i].startTime),
+                            formatTime(currentFilteredData[i].endTime),
+                            currentFilteredData[i].runningHours + ' hrs',
+                            formatNumber(currentFilteredData[i].fuelAdded) + ' L',
+                            (currentFilteredData[i].runningHours > 0 ? (currentFilteredData[i].fuelAdded / currentFilteredData[i].runningHours).toFixed(2) : '0.00') + ' L/hr',
+                            currentFilteredData[i].technician
+                        ]);
+                    }
+                    
+                    // Add table
+                    doc.autoTable({
+                        head: [['Generator ID', 'Date', 'Start Time', 'End Time', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
+                        body: tableData,
+                        startY: 70,
+                        theme: 'striped',
+                        styles: { fontSize: 10 },
+                        headStyles: { fillColor: [102, 126, 234] }
+                    });
+                    
+                    // Add footer
+                    var pageCount = doc.internal.getNumberOfPages();
+                    for (var i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8);
+                        doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
+                        doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                    }
+                    
+                    // Save the PDF
+                    var dateStr = new Date().toISOString().slice(0, 10);
+                    doc.save('Generator_Fuel_Records_' + dateStr + '.pdf');
+                    
+                    showNotification('PDF export completed', 'success');
+                });
+
+                // Open Edit Modal
+                function openEditModal(e) {
+                    var id = e.target.getAttribute('data-id');
+                    var record = null;
+                    for (var i = 0; i < fuelData.length; i++) {
+                        if (fuelData[i].id === id) {
+                            record = fuelData[i];
+                            break;
+                        }
+                    }
+                    
+                    if (record) {
+                        editRecordId.value = record.id;
+                        editGeneratorId.value = record.generatorId;
+                        editDate.value = record.date;
+                        editStartTime.value = record.startTime;
+                        editEndTime.value = record.endTime;
+                        editFuelAdded.value = record.fuelAdded;
+                        editTechnician.value = record.technician;
+                        
+                        // Update running hours display
+                        updateEditRunningHours();
+                        
+                        editModal.style.display = 'block';
+                    }
+                }
+
+                // Close Modal
+                function closeModalHandler() {
+                    editModal.style.display = 'none';
+                    editForm.reset();
+                }
+
+                // Confirm Delete Record
+                function confirmDeleteRecord(e) {
+                    var id = e.target.getAttribute('data-id');
+                    var record = null;
+                    for (var i = 0; i < fuelData.length; i++) {
+                        if (fuelData[i].id === id) {
+                            record = fuelData[i];
+                            break;
+                        }
+                    }
+                    
+                    if (record) {
+                        if (confirm('Are you sure you want to delete this record?')) {
+                            deleteRecord(id);
                         }
                     }
                 }
-            });
-        }
 
-        function filterRecords() {
-            renderRecordsTable();
-        }
+                // Delete Record
+                function deleteRecord(id) {
+                    db.collection('fuelRecords').doc(id).delete()
+                    .then(function() {
+                        // Remove from local data
+                        var newFuelData = [];
+                        for (var i = 0; i < fuelData.length; i++) {
+                            if (fuelData[i].id !== id) {
+                                newFuelData.push(fuelData[i]);
+                            }
+                        }
+                        fuelData = newFuelData;
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Update UI
+                        applyFilters();
+                        applyRecordFilters();
+                        
+                        showNotification('Record deleted successfully!', 'success');
+                    })
+                    .catch(function(error) {
+                        console.error('Error deleting record:', error);
+                        showNotification('Failed to delete record. Please try again.', 'error');
+                    });
+                }
 
-        function clearAllFilters() {
-            searchInput.value = '';
-            generatorFilter.value = '';
-            
-            // Set default date range (last 30 days)
-            const today = new Date();
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(today.getDate() - 30);
-            
-            startDate.value = thirtyDaysAgo.toISOString().split('T')[0];
-            endDate.value = today.toISOString().split('T')[0];
-            
-            renderRecordsTable();
-        }
-
-        function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString(undefined, options);
-        }
-
-        function showNotification(message, type = 'success') {
-            notificationMessage.textContent = message;
-            
-            // Set icon based on type
-            let iconClass = 'fas fa-check-circle';
-            if (type === 'error') iconClass = 'fas fa-exclamation-circle';
-            if (type === 'warning') iconClass = 'fas fa-exclamation-triangle';
-            if (type === 'info') iconClass = 'fas fa-info-circle';
-            
-            notificationIcon.className = `notification-icon ${type} ${iconClass}`;
-            
-            // Set background color based on type
-            const content = notification.querySelector('.notification-content');
-            if (type === 'success') content.style.background = '#27ae60';
-            if (type === 'error') content.style.background = '#e74c3c';
-            if (type === 'warning') content.style.background = '#f39c12';
-            if (type === 'info') content.style.background = '#3498db';
-            
-            notification.classList.add('show');
-            
-            // Auto hide after 5 seconds
-            setTimeout(() => {
-                hideNotification();
-            }, 5000);
-        }
-
-        function hideNotification() {
-            notification.classList.remove('show');
-        }
-
-        function generateDashboardPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Add framework design to PDF
-            addPDFFramework(doc, 'Generator Fuel Tracker - Dashboard Report');
-            
-            // Add title
-            doc.setFontSize(18);
-            doc.setTextColor(40, 40, 40);
-            doc.text('Generator Fuel Tracker - Dashboard', 105, 40, { align: 'center' });
-            
-            // Add date
-            doc.setFontSize(12);
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 50, { align: 'center' });
-            
-            // Add stats
-            doc.setFontSize(14);
-            doc.setTextColor(60, 60, 60);
-            doc.text('Summary Statistics', 20, 70);
-            
-            doc.setFontSize(11);
-            doc.setTextColor(80, 80, 80);
-            doc.text(`Total Fuel Used: ${adminTotalFuel.textContent}`, 20, 80);
-            doc.text(`Total Running Hours: ${adminTotalHours.textContent}`, 20, 87);
-            doc.text(`Average Consumption: ${adminAvgConsumption.textContent}`, 20, 94);
-            doc.text(`Current Fuel Level: ${adminFuelLevel.textContent}`, 20, 101);
-            
-            // Add a simple chart representation (in a real scenario, you would add the actual chart images)
-            doc.setFontSize(14);
-            doc.setTextColor(60, 60, 60);
-            doc.text('Fuel Consumption Overview', 20, 115);
-            
-            // Simple bar representation
-            const fuelData = fuelChart ? fuelChart.data : { labels: ['400KVA', '1250KVA'], datasets: [{ data: [500, 750] }] };
-            const maxValue = Math.max(...fuelData.datasets[0].data);
-            const barWidth = 20;
-            const chartHeight = 40;
-            const chartX = 20;
-            const chartY = 125;
-            
-            fuelData.labels.forEach((label, i) => {
-                const value = fuelData.datasets[0].data[i];
-                const barHeight = (value / maxValue) * chartHeight;
-                
-                // Draw bar
-                doc.setFillColor(70 + i * 40, 130 + i * 20, 200 - i * 30);
-                doc.rect(chartX + i * 30, chartY + chartHeight - barHeight, barWidth, barHeight, 'F');
-                
-                // Draw label
-                doc.setFontSize(9);
-                doc.setTextColor(80, 80, 80);
-                doc.text(label, chartX + i * 30 + barWidth/2, chartY + chartHeight + 5, { align: 'center' });
-                
-                // Draw value
-                doc.text(value.toString(), chartX + i * 30 + barWidth/2, chartY + chartHeight - barHeight - 3, { align: 'center' });
-            });
-            
-            // Add page number
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(10);
-                doc.setTextColor(150, 150, 150);
-                doc.text(`Page ${i} of ${pageCount}`, 200, 285, { align: 'right' });
-            }
-            
-            // Save the PDF
-            doc.save('Generator_Fuel_Dashboard_Report.pdf');
-        }
-
-        function generateRecordsPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Add framework design to PDF
-            addPDFFramework(doc, 'Generator Fuel Tracker - Records Report');
-            
-            // Add title
-            doc.setFontSize(18);
-            doc.setTextColor(40, 40, 40);
-            doc.text('Generator Fuel Tracker - Records', 105, 40, { align: 'center' });
-            
-            // Add date
-            doc.setFontSize(12);
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, 50, { align: 'center' });
-            
-            // Add filters info
-            doc.setFontSize(11);
-            doc.setTextColor(80, 80, 80);
-            
-            let filterInfo = 'All Records';
-            if (generatorFilter.value) filterInfo += ` | Generator: ${generatorFilter.value}`;
-            if (startDate.value && endDate.value) {
-                filterInfo += ` | Date: ${startDate.value} to ${endDate.value}`;
-            }
-            if (searchInput.value) filterInfo += ` | Search: ${searchInput.value}`;
-            
-            doc.text(filterInfo, 105, 60, { align: 'center' });
-            
-            // Create table data
-            const tableData = [];
-            const filteredRecords = getFilteredRecords();
-            
-            if (filteredRecords.length === 0) {
-                doc.setFontSize(14);
-                doc.setTextColor(100, 100, 100);
-                doc.text('No records to display', 105, 80, { align: 'center' });
-            } else {
-                // Add table headers
-                const headers = [['Date', 'Generator', 'Start Time', 'End Time', 'Hours', 'Fuel (L)', 'Technician']];
-                
-                // Add table rows
-                filteredRecords.forEach(record => {
-                    tableData.push([
-                        formatDate(record.date),
-                        record.generatorId,
-                        record.startTime,
-                        record.endTime,
-                        record.runningHours.toFixed(2),
-                        record.fuelAdded.toFixed(2),
-                        record.technician
-                    ]);
-                });
-                
-                // Generate table
-                doc.autoTable({
-                    startY: 70,
-                    head: headers,
-                    body: tableData,
-                    theme: 'grid',
-                    headStyles: {
-                        fillColor: [44, 62, 80],
-                        textColor: [255, 255, 255],
-                        fontStyle: 'bold'
-                    },
-                    alternateRowStyles: {
-                        fillColor: [245, 247, 250]
-                    },
-                    margin: { top: 70 }
-                });
-            }
-            
-            // Add page number
-            const pageCount = doc.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(10);
-                doc.setTextColor(150, 150, 150);
-                doc.text(`Page ${i} of ${pageCount}`, 200, 285, { align: 'right' });
-            }
-            
-            // Save the PDF
-            doc.save('Generator_Fuel_Records_Report.pdf');
-        }
-
-        function addPDFFramework(doc, title) {
-            // Set background color for the entire page
-            doc.setFillColor(245, 247, 250);
-            doc.rect(0, 0, doc.internal.pageSize.getWidth(), doc.internal.pageSize.getHeight(), 'F');
-            
-            // Add header with blue background
-            doc.setFillColor(44, 62, 80);
-            doc.rect(0, 0, doc.internal.pageSize.getWidth(), 60, 'F');
-            
-            // Add title in header
-            doc.setFontSize(20);
-            doc.setTextColor(255, 255, 255);
-            doc.text(title, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
-            
-            // Add footer with blue background
-            doc.setFillColor(44, 62, 80);
-            doc.rect(0, doc.internal.pageSize.getHeight() - 30, doc.internal.pageSize.getWidth(), 30, 'F');
-            
-            // Add company name in footer
-            doc.setFontSize(12);
-            doc.setTextColor(255, 255, 255);
-            doc.text('Generator Fuel Tracker System', doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 15, { align: 'center' });
-            
-            // Add decorative elements (blue and yellow geometric patterns)
-            doc.setDrawColor(102, 126, 234);
-            doc.setFillColor(102, 126, 234, 0.1);
-            
-            // Top left pattern
-            doc.circle(15, 15, 8, 'FD');
-            doc.circle(30, 30, 6, 'FD');
-            
-            // Top right pattern
-            doc.circle(doc.internal.pageSize.getWidth() - 15, 15, 8, 'FD');
-            doc.circle(doc.internal.pageSize.getWidth() - 30, 30, 6, 'FD');
-            
-            // Bottom left pattern
-            doc.circle(15, doc.internal.pageSize.getHeight() - 15, 8, 'FD');
-            doc.circle(30, doc.internal.pageSize.getHeight() - 30, 6, 'FD');
-            
-            // Bottom right pattern
-            doc.circle(doc.internal.pageSize.getWidth() - 15, doc.internal.pageSize.getHeight() - 15, 8, 'FD');
-            doc.circle(doc.internal.pageSize.getWidth() - 30, doc.internal.pageSize.getHeight() - 30, 6, 'FD');
-            
-            // Add yellow decorative elements
-            doc.setDrawColor(255, 193, 7);
-            doc.setFillColor(255, 193, 7, 0.1);
-            
-            // Additional decorative elements
-            doc.rect(50, 40, 5, 5, 'FD');
-            doc.rect(70, 45, 5, 5, 'FD');
-            doc.rect(doc.internal.pageSize.getWidth() - 50, 40, 5, 5, 'FD');
-            doc.rect(doc.internal.pageSize.getWidth() - 70, 45, 5, 5, 'FD');
-            
-            doc.rect(50, doc.internal.pageSize.getHeight() - 40, 5, 5, 'FD');
-            doc.rect(70, doc.internal.pageSize.getHeight() - 45, 5, 5, 'FD');
-            doc.rect(doc.internal.pageSize.getWidth() - 50, doc.internal.pageSize.getHeight() - 40, 5, 5, 'FD');
-            doc.rect(doc.internal.pageSize.getWidth() - 70, doc.internal.pageSize.getHeight() - 45, 5, 5, 'FD');
-        }
-
-        function getFilteredRecords() {
-            let filteredRecords = [...fuelRecords];
-            
-            // Search filter
-            const searchTerm = searchInput.value.toLowerCase();
-            if (searchTerm) {
-                filteredRecords = filteredRecords.filter(record => 
-                    record.technician.toLowerCase().includes(searchTerm) ||
-                    record.generatorId.toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            // Generator filter
-            const generatorValue = generatorFilter.value;
-            if (generatorValue) {
-                filteredRecords = filteredRecords.filter(record => 
-                    record.generatorId === generatorValue
-                );
-            }
-            
-            // Date range filter
-            const startDateValue = startDate.value;
-            const endDateValue = endDate.value;
-            if (startDateValue && endDateValue) {
-                filteredRecords = filteredRecords.filter(record => {
-                    const recordDate = new Date(record.date);
-                    const start = new Date(startDateValue);
-                    const end = new Date(endDateValue);
-                    end.setDate(end.getDate() + 1); // Include end date
+                // Edit Form Submission
+                editForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
                     
-                    return recordDate >= start && recordDate < end;
+                    var id = editRecordId.value;
+                    var record = {
+                        generatorId: editGeneratorId.value.trim(),
+                        date: editDate.value,
+                        startTime: editStartTime.value,
+                        endTime: editEndTime.value,
+                        runningHours: parseFloat(calculateRunningHours(editStartTime.value, editEndTime.value)),
+                        fuelAdded: parseFloat(editFuelAdded.value),
+                        technician: editTechnician.value.trim(),
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    db.collection('fuelRecords').doc(id).update(record)
+                    .then(function() {
+                        // Update local data
+                        for (var i = 0; i < fuelData.length; i++) {
+                            if (fuelData[i].id === id) {
+                                fuelData[i] = { id: id, generatorId: editGeneratorId.value.trim(), 
+                                               date: editDate.value, startTime: editStartTime.value, 
+                                               endTime: editEndTime.value, 
+                                               runningHours: parseFloat(calculateRunningHours(editStartTime.value, editEndTime.value)), 
+                                               fuelAdded: parseFloat(editFuelAdded.value), 
+                                               technician: editTechnician.value.trim(), 
+                                               timestamp: new Date().toISOString() };
+                                break;
+                            }
+                        }
+                        
+                        localStorage.setItem('fuelData', JSON.stringify(fuelData));
+                        
+                        // Update UI
+                        applyFilters();
+                        applyRecordFilters();
+                        
+                        closeModalHandler();
+                        showNotification('Record updated successfully!', 'success');
+                    })
+                    .catch(function(error) {
+                        console.error('Error updating record:', error);
+                        showNotification('Failed to update record. Please try again.', 'error');
+                    });
                 });
-            }
-            
-            return filteredRecords;
-        }
 
-        function exportToExcel() {
-            // Create a new workbook
-            const wb = XLSX.utils.book_new();
-            
-            // Get filtered records
-            const filteredRecords = getFilteredRecords();
-            
-            // Prepare data for Excel
-            const excelData = filteredRecords.map(record => ({
-                'Date': record.date,
-                'Generator ID': record.generatorId,
-                'Start Time': record.startTime,
-                'End Time': record.endTime,
-                'Running Hours': record.runningHours,
-                'Fuel Added (L)': record.fuelAdded,
-                'Technician': record.technician
-            }));
-            
-            // Create worksheet
-            const ws = XLSX.utils.json_to_sheet(excelData);
-            
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Fuel Records');
-            
-            // Generate Excel file and trigger download
-            XLSX.writeFile(wb, 'Generator_Fuel_Records.xlsx');
-        }
-    </script>
+                // Edit form time change handlers
+                editStartTime.addEventListener('change', updateEditRunningHours);
+                editEndTime.addEventListener('change', updateEditRunningHours);
+
+                // Modal event listeners
+                closeModal.addEventListener('click', closeModalHandler);
+                cancelEdit.addEventListener('click', closeModalHandler);
+
+                // Close modal when clicking outside
+                window.addEventListener('click', function(e) {
+                    if (e.target === editModal) {
+                        closeModalHandler();
+                    }
+                });
+
+                // Close notification when clicking X
+                closeNotification.addEventListener('click', hideNotification);
+
+                // Auth state change listener
+                auth.onAuthStateChanged(function(user) {
+                    if (user) {
+                        // User is signed in
+                        db.collection('users').doc(user.uid).get()
+                        .then(function(doc) {
+                            if (doc.exists) {
+                                currentUser = user;
+                                currentRole = doc.data().role;
+                                
+                                // Update UI
+                                if (currentRole === 'admin') {
+                                    adminName.textContent = doc.data().displayName || doc.data().email;
+                                    adminEmail.textContent = doc.data().email;
+                                    setUserAvatar(adminAvatar, doc.data().displayName || doc.data().email);
+                                    showDashboard('admin');
+                                    loadFuelData();
+                                } else {
+                                    userName.textContent = doc.data().displayName || doc.data().email;
+                                    userEmail.textContent = doc.data().email;
+                                    setUserAvatar(userAvatar, doc.data().displayName || doc.data().email);
+                                    showDashboard('user');
+                                }
+                            } else {
+                                // User exists but no data in Firestore - sign out
+                                auth.signOut();
+                                showAuthPage('loginPage');
+                                authContainer.style.display = 'flex';
+                                showNotification('User data not found. Please contact administrator.', 'error');
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('Error loading user ', error);
+                            showNotification('Failed to load user data.', 'error');
+                        });
+                    } else {
+                        // User is signed out
+                        currentUser = null;
+                        currentRole = null;
+                        showAuthPage('loginPage');
+                        authContainer.style.display = 'flex';
+                    }
+                });
+
+                // Initialize the app
+                function initApp() {
+                    // Show login page by default
+                    showAuthPage('loginPage');
+                    
+                    // Check if user is already signed in
+                    var user = auth.currentUser;
+                    if (user) {
+                        // The onAuthStateChanged listener will handle this
+                    }
+                }
+
+                // Start the app
+                initApp();
+
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                // Show error message to user
+                document.body.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f7fa; font-family: Arial, sans-serif;"><div style="background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; max-width: 600px;"><h1 style="color: #e74c3c; margin-bottom: 20px;"><i class="fas fa-exclamation-triangle"></i> Configuration Error</h1><p style="color: #333; margin-bottom: 20px;">Firebase configuration is missing or incorrect.</p><p style="color: #7f8c8d; margin-bottom: 30px; line-height: 1.6;">Please follow these steps to fix the issue:<br><br>1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color: #667eea;">Firebase Console</a><br>2. Create a new project or select an existing one<br>3. Register your web app and get the configuration object<br>4. Replace the firebaseConfig object in script.js with your own configuration</p><button onclick="location.reload()" style="background: #667eea; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 1rem;">Retry</button></div></div>';
+            }
+        })();
+    
+// === PDF Generation with Blue-Yellow Frame ===
+async function generateDashboardPdf(filters) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "mm", "a4");
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  function drawFrame() {
+    // Blue border bars
+    doc.setFillColor(8, 63, 127); // navy
+    doc.rect(0, 0, pageWidth, 12, "F");
+    doc.rect(0, pageHeight-12, pageWidth, 12, "F");
+    doc.rect(0, 0, 12, pageHeight, "F");
+    doc.rect(pageWidth-12, 0, 12, pageHeight, "F");
+    // Yellow corner accents
+    doc.setFillColor(247, 189, 33);
+    doc.rect(14, 14, 12, 12, "F");
+    doc.rect(pageWidth-26, pageHeight-26, 12, 12, "F");
+  }
+
+  // === Page 1 Summary ===
+  drawFrame();
+  doc.setFontSize(16);
+  doc.text("Dashboard Report", pageWidth/2, 25, { align: "center" });
+  doc.setFontSize(12);
+  if(filters && filters.dateRange){
+    doc.text("Date Range: " + filters.dateRange, 20, 40);
+  }
+
+  // Example summary values from DOM (replace IDs as per your dashboard)
+  let totalFuel = document.getElementById("totalFuelUsed")?.textContent || "0";
+  let totalHours = document.getElementById("totalRunningHours")?.textContent || "0";
+  let avgConsumption = document.getElementById("avgConsumption")?.textContent || "0";
+  let totalRecords = document.getElementById("totalRecords")?.textContent || "0";
+
+  doc.text("Total Fuel Used: " + totalFuel, 20, 60);
+  doc.text("Total Running Hours: " + totalHours, 20, 70);
+  doc.text("Average Consumption: " + avgConsumption, 20, 80);
+  doc.text("Total Records: " + totalRecords, 20, 90);
+
+  // === Page 2 Charts ===
+  doc.addPage();
+  drawFrame();
+  doc.setFontSize(14);
+  doc.text("Charts", pageWidth/2, 25, { align: "center" });
+
+  // Pie chart export
+  const pieCanvas = document.getElementById("pieChart");
+  if (pieCanvas) {
+    const pieImg = pieCanvas.toDataURL("image/png", 1.0);
+    doc.addImage(pieImg, "PNG", 30, 40, 150, 80);
+  }
+  // Donut chart export
+  const donutCanvas = document.getElementById("donutChart");
+  if (donutCanvas) {
+    const donutImg = donutCanvas.toDataURL("image/png", 1.0);
+    doc.addImage(donutImg, "PNG", 30, 130, 150, 80);
+  }
+
+  doc.save("dashboard_report.pdf");
+}
+
+async function generateFuelRecordsPdf(filters) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "mm", "a4");
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  function drawFrame() {
+    doc.setFillColor(8, 63, 127);
+    doc.rect(0, 0, pageWidth, 12, "F");
+    doc.rect(0, pageHeight-12, pageWidth, 12, "F");
+    doc.rect(0, 0, 12, pageHeight, "F");
+    doc.rect(pageWidth-12, 0, 12, pageHeight, "F");
+    doc.setFillColor(247, 189, 33);
+    doc.rect(14, 14, 12, 12, "F");
+    doc.rect(pageWidth-26, pageHeight-26, 12, 12, "F");
+  }
+
+  drawFrame();
+  doc.setFontSize(16);
+  doc.text("Fuel Records Report", pageWidth/2, 25, { align: "center" });
+  if(filters && filters.dateRange){
+    doc.setFontSize(12);
+    doc.text("Date Range: " + filters.dateRange, 20, 40);
+  }
+
+  // Example summary values from DOM (replace IDs as per your records page)
+  let totalFuel = document.getElementById("recordsTotalFuel")?.textContent || "0";
+  let totalHours = document.getElementById("recordsTotalHours")?.textContent || "0";
+  let avgConsumption = document.getElementById("recordsAvgConsumption")?.textContent || "0";
+  let totalRecords = document.getElementById("recordsCount")?.textContent || "0";
+
+  doc.text("Total Fuel Used: " + totalFuel, 20, 60);
+  doc.text("Total Running Hours: " + totalHours, 20, 70);
+  doc.text("Average Consumption: " + avgConsumption, 20, 80);
+  doc.text("Total Records: " + totalRecords, 20, 90);
+
+  // Records table
+  const rows = [];
+  document.querySelectorAll("#recordsTable tbody tr").forEach(tr => {
+    const row = [];
+    tr.querySelectorAll("td").forEach(td => row.push(td.textContent.trim()));
+    rows.push(row);
+  });
+
+  if (rows.length > 0) {
+    doc.autoTable({
+      startY: 100,
+      head: [["Date", "Fuel Used", "Running Hours", "Consumption"]],
+      body: rows,
+      theme: "striped"
+    });
+  }
+
+  doc.save("fuel_records_report.pdf");
+}
+
+// Attach to buttons
+document.addEventListener("DOMContentLoaded", function(){
+  const dashBtn = document.getElementById("printPdf");
+  if (dashBtn) dashBtn.addEventListener("click", () => generateDashboardPdf({ dateRange: document.getElementById("dateRange")?.value }));
+  const recBtn = document.getElementById("adminPrintPdf");
+  if (recBtn) recBtn.addEventListener("click", () => generateFuelRecordsPdf({ dateRange: document.getElementById("dateRange")?.value }));
+});
+
+</script>
 </body>
 </html>
