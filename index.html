@@ -4,23 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Generator Fuel Tracker</title>
-    <!-- CSP for GitHub Pages -->
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
-    <!-- Excel & PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     
     <style>
@@ -1018,17 +1013,13 @@
     </style>
 </head>
 <body>
-    <!-- Mobile Menu Button -->
     <button id="mobileMenuBtn" class="mobile-menu-btn">
         <i class="fas fa-bars"></i>
     </button>
 
-    <!-- Overlay for mobile -->
     <div id="overlay" class="overlay"></div>
 
-    <!-- Authentication Pages -->
     <div id="authContainer" class="auth-container">
-        <!-- Login Page -->
         <div id="loginPage" class="auth-page active">
             <div class="auth-form">
                 <div class="auth-logo">
@@ -1055,7 +1046,6 @@
             </div>
         </div>
 
-        <!-- Register Page -->
         <div id="registerPage" class="auth-page">
             <div class="auth-form">
                 <div class="auth-logo">
@@ -1105,9 +1095,7 @@
         </div>
     </div>
 
-    <!-- Admin Dashboard -->
     <div id="adminDashboard" class="dashboard-container">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
                 <div class="user-profile">
@@ -1141,9 +1129,7 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
-            <!-- Admin Form Page -->
             <div id="adminForm" class="content-page active">
                 <div class="page-header">
                     <h1><i class="fas fa-plus-circle"></i> Add Fuel Record</h1>
@@ -1201,7 +1187,6 @@
                 </section>
             </div>
 
-            <!-- Admin Dashboard View -->
             <div id="adminDashboardView" class="content-page">
                 <div class="page-header">
                     <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
@@ -1215,7 +1200,6 @@
                     </div>
                 </div>
 
-                <!-- Dashboard Stats -->
                 <section class="dashboard">
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -1248,7 +1232,6 @@
                         </div>
                     </div>
                     
-                    <!-- Filter Controls -->
                     <div class="filter-container">
                         <div class="filter-group">
                             <div class="input-icon">
@@ -1275,7 +1258,6 @@
                         </button>
                     </div>
 
-                    <!-- Charts -->
                     <div class="charts-grid">
                         <div class="chart-container" style="grid-column: span 2;">
                             <h3><i class="fas fa-chart-line"></i> Fuel Usage Over Time</h3>
@@ -1297,7 +1279,6 @@
                 </section>
             </div>
 
-            <!-- Add New User Page -->
             <div id="addNewUser" class="content-page">
                 <div class="page-header">
                     <h1><i class="fas fa-user-plus"></i> Add New User</h1>
@@ -1344,10 +1325,8 @@
         </div>
     </div>
 
-    <!-- Fuel Records Page (No Sidebar) -->
     <div id="fuelRecordsPage" class="dashboard-container" style="display: none;">
         <div class="main-content" style="margin-left: 0;">
-            <!-- Page Header -->
             <div class="page-header">
                 <h1><i class="fas fa-table"></i> Fuel Records</h1>
                 <div class="table-actions">
@@ -1363,7 +1342,6 @@
                 </div>
             </div>
 
-            <!-- Dashboard Stats -->
             <section class="dashboard">
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -1396,7 +1374,6 @@
                     </div>
                 </div>
                 
-                <!-- Filter Controls -->
                 <div class="filter-container">
                     <div class="filter-group">
                         <div class="input-icon">
@@ -1423,7 +1400,6 @@
                     </button>
                 </div>
 
-                <!-- Data Table -->
                 <div class="table-container">
                     <table id="recordsTable">
                         <thead>
@@ -1438,8 +1414,7 @@
                             </tr>
                         </thead>
                         <tbody id="recordsTableBody">
-                            <!-- Rows will be inserted here -->
-                        </tbody>
+                            </tbody>
                     </table>
                     <p id="noRecords" class="no-records">No records found.</p>
                     <div id="recordsLoading" class="loading">
@@ -1450,7 +1425,6 @@
         </div>
     </div>
 
-    <!-- User Dashboard -->
     <div id="userDashboard" class="user-container">
         <header>
             <div class="header-left">
@@ -1467,7 +1441,6 @@
             </button>
         </header>
 
-        <!-- User Form -->
         <div class="container">
             <section class="form-section">
                 <h2><i class="fas fa-plus-circle"></i> Add Fuel Record</h2>
@@ -1524,7 +1497,6 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1583,7 +1555,6 @@
         </div>
     </div>
 
-    <!-- Notification Toast -->
     <div id="notification" class="notification">
         <div class="notification-content">
             <i class="fas fa-check-circle notification-icon success"></i>
@@ -1597,13 +1568,13 @@
         (function() {
             // Firebase configuration - REPLACE WITH YOUR OWN CONFIGURATION
             const firebaseConfig = {
-  apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
-  authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
-  projectId: "generator-fuel-tracker-1aa43",
-  storageBucket: "generator-fuel-tracker-1aa43.firebasestorage.app",
-  messagingSenderId: "588123990552",
-  appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
-};
+              apiKey: "AIzaSyAptZ78ikh6z2QT1YABZTslPIXpxGND95A",
+              authDomain: "generator-fuel-tracker-1aa43.firebaseapp.com",
+              projectId: "generator-fuel-tracker-1aa43",
+              storageBucket: "generator-fuel-tracker-1aa43.firebasestorage.app",
+              messagingSenderId: "588123990552",
+              appId: "1:588123990552:web:3d3cf69c80bb8da45ab16d"
+            };
 
             try {
                 // Check if Firebase is already initialized
@@ -1742,7 +1713,7 @@
 
                 // Format number with commas and decimals
                 function formatNumber(num) {
-                    return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionSymbols: 2 });
+                    return Number(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
 
                 // Format date range for display
@@ -3030,143 +3001,163 @@
                     showNotification('Excel export completed', 'success');
                 });
 
-                // Print to PDF (Dashboard) - All charts on one PDF
+                // NEW: Reusable function to draw the PDF framework
+                function drawPdfFramework(doc, title, pageNumber, totalPages) {
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const margin = 40; // in points
+
+                    // --- Header ---
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(18);
+                    doc.setTextColor(44, 62, 80); // #2c3e50
+                    doc.text('Generator Fuel Tracker', margin, margin);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(12);
+                    doc.setTextColor(44, 62, 80);
+                    doc.text(title, margin, margin + 20);
+
+                    const reportDate = 'Generated on: ' + new Date().toLocaleDateString();
+                    doc.setFontSize(9);
+                    doc.setTextColor(127, 140, 141); // #7f8c8d
+                    doc.text(reportDate, pageWidth - margin, margin, { align: 'right' });
+                    
+                    // Header Line
+                    doc.setDrawColor(102, 126, 234); // #667eea
+                    doc.setLineWidth(1.5);
+                    doc.line(margin, margin + 30, pageWidth - margin, margin + 30);
+
+                    // --- Footer ---
+                    const footerY = pageHeight - margin;
+                    // Footer Line
+                    doc.setDrawColor(102, 126, 234);
+                    doc.setLineWidth(1.5);
+                    doc.line(margin, footerY, pageWidth - margin, footerY);
+
+                    doc.setFontSize(8);
+                    doc.setTextColor(127, 140, 141);
+                    doc.text('Created By Aung Ye Hein', margin, footerY + 15);
+                    const pageText = 'Page ' + pageNumber + ' of ' + totalPages;
+                    doc.text(pageText, pageWidth - margin, footerY + 15, { align: 'right' });
+
+                    // --- Page Border ---
+                    doc.setDrawColor(200, 200, 200);
+                    doc.setLineWidth(0.5);
+                    doc.rect(margin / 2, margin / 2, pageWidth - margin, pageHeight - margin);
+                }
+
+                // REWRITTEN: Print to PDF (Dashboard)
                 adminPrintPdf.addEventListener('click', function() {
                     if (currentFilteredData.length === 0) {
                         showNotification('No data to export.', 'warning');
                         return;
                     }
 
-                    // Create a new jsPDF instance
-                    var { jsPDF } = window.jspdf;
-                    var doc = new jsPDF();
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'pt', 'a4');
+                    const contentStartY = 80;
 
-                    // Add title
-                    doc.setFontSize(20);
-                    doc.text('Generator Fuel Dashboard', 14, 20);
-                    
-                    // Add stats
-                    doc.setFontSize(12);
-                    doc.text('Total Fuel Used: ' + adminTotalFuel.textContent, 14, 35);
-                    doc.text('Total Running Hours: ' + adminTotalHours.textContent, 14, 42);
-                    doc.text('Average Consumption: ' + adminAvgConsumption.textContent, 14, 49);
-                    doc.text('Total Records: ' + adminTotalRecords.textContent, 14, 56);
-                    
-                    // Add date duration
-                    var dateRange = formatDateRange(adminFilterDateFrom.value, adminFilterDateTo.value);
-                    doc.text('Date Duration: ' + dateRange, 14, 63);
-                    
-                    // Add charts - Line Chart
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.line) {
-                        var lineImg = dashboardCharts.line.toBase64Image();
-                        doc.addImage(lineImg, 'PNG', 14, 70, 180, 80);
+                    // Page 1: Summary and Charts
+                    const dateRange = formatDateRange(adminFilterDateFrom.value, adminFilterDateTo.value);
+                    doc.setFontSize(10);
+                    doc.text('Data filtered for: ' + dateRange, 40, contentStartY);
+                    doc.text('Total Fuel Used: ' + adminTotalFuel.textContent, 40, contentStartY + 15);
+                    doc.text('Total Running Hours: ' + adminTotalHours.textContent, 40, contentStartY + 30);
+                    doc.text('Average Consumption: ' + adminAvgConsumption.textContent, 250, contentStartY + 15);
+                    doc.text('Total Records: ' + adminTotalRecords.textContent, 250, contentStartY + 30);
+
+                    if (dashboardCharts.line) {
+                        const lineImg = dashboardCharts.line.toBase64Image();
+                        doc.addImage(lineImg, 'PNG', 40, contentStartY + 50, 515, 230);
                     }
-                    
-                    // Bar Chart
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.bar) {
-                        var barImg = dashboardCharts.bar.toBase64Image();
-                        doc.addImage(barImg, 'PNG', 14, 160, 180, 80);
+                    if (dashboardCharts.bar) {
+                        const barImg = dashboardCharts.bar.toBase64Image();
+                        doc.addImage(barImg, 'PNG', 40, contentStartY + 300, 515, 230);
                     }
-                    
-                    // Add second page
+
+                    // Page 2: Distribution Charts
                     doc.addPage();
-                    
-                    // Add title for second page
-                    doc.setFontSize(20);
-                    doc.text('Distribution Analysis', 14, 20);
-                    
-                    // Pie Chart - Generator Usage Distribution
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.pie) {
-                        var pieImg = dashboardCharts.pie.toBase64Image();
-                        doc.addImage(pieImg, 'PNG', 14, 30, 180, 100);
+                    if (dashboardCharts.pie) {
+                        const pieImg = dashboardCharts.pie.toBase64Image();
+                        doc.addImage(pieImg, 'PNG', 40, contentStartY, 515, 280);
                     }
-                    
-                    // Doughnut Chart - Technician Contribution
-                    if (typeof dashboardCharts !== 'undefined' && dashboardCharts.doughnut) {
-                        var doughnutImg = dashboardCharts.doughnut.toBase64Image();
-                        doc.addImage(doughnutImg, 'PNG', 14, 140, 180, 100);
+                    if (dashboardCharts.doughnut) {
+                        const doughnutImg = dashboardCharts.doughnut.toBase64Image();
+                        doc.addImage(doughnutImg, 'PNG', 40, contentStartY + 300, 515, 280);
                     }
-                    
-                    // Add footer for both pages
-                    var pageCount = doc.internal.getNumberOfPages();
-                    for (var i = 1; i <= pageCount; i++) {
+
+                    // Add framework to all pages
+                    const pageCount = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
                         doc.setPage(i);
-                        doc.setFontSize(8);
-                        doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
-                        doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                        const pageTitle = (i === 1) ? 'Dashboard Overview' : 'Usage Distribution';
+                        drawPdfFramework(doc, pageTitle, i, pageCount);
                     }
-                    
-                    // Save the PDF
-                    var dateStr = new Date().toISOString().slice(0, 10);
+
+                    const dateStr = new Date().toISOString().slice(0, 10);
                     doc.save('Generator_Fuel_Dashboard_' + dateStr + '.pdf');
-                    
                     showNotification('PDF export completed', 'success');
                 });
 
-                // Print to PDF (Records)
+                // REWRITTEN: Print to PDF (Records)
                 printPdf.addEventListener('click', function() {
                     if (currentFilteredData.length === 0) {
                         showNotification('No data to export.', 'warning');
                         return;
                     }
 
-                    // Create a new jsPDF instance
-                    var { jsPDF } = window.jspdf;
-                    var doc = new jsPDF();
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'pt', 'a4');
+                    const contentStartY = 80;
 
-                    // Add title
-                    doc.setFontSize(20);
-                    doc.text('Generator Fuel Records', 14, 20);
-                    
-                    // Add stats
-                    doc.setFontSize(12);
-                    doc.text('Total Fuel Used: ' + recordTotalFuel.textContent, 14, 35);
-                    doc.text('Total Running Hours: ' + recordTotalHours.textContent, 14, 42);
-                    doc.text('Average Consumption: ' + recordAvgConsumption.textContent, 14, 49);
-                    doc.text('Total Records: ' + recordTotalRecords.textContent, 14, 56);
-                    
-                    // Add date duration
-                    var dateRange = formatDateRange(recordFilterDateFrom.value, recordFilterDateTo.value);
-                    doc.text('Date Duration: ' + dateRange, 14, 63);
-                    
+                    // Add stats to the first page
+                    const dateRange = formatDateRange(recordFilterDateFrom.value, recordFilterDateTo.value);
+                    doc.setFontSize(10);
+                    doc.text('Data filtered for: ' + dateRange, 40, contentStartY);
+                    doc.text('Total Fuel Used: ' + recordTotalFuel.textContent, 40, contentStartY + 15);
+                    doc.text('Total Running Hours: ' + recordTotalHours.textContent, 40, contentStartY + 30);
+                    doc.text('Average Consumption: ' + recordAvgConsumption.textContent, 250, contentStartY + 15);
+                    doc.text('Total Records: ' + recordTotalRecords.textContent, 250, contentStartY + 30);
+
                     // Prepare table data
-                    var tableData = [];
-                    for (var i = 0; i < currentFilteredData.length; i++) {
-                        tableData.push([
-                            currentFilteredData[i].generatorId,
-                            formatDate(currentFilteredData[i].date),
-                            formatTime(currentFilteredData[i].startTime),
-                            formatTime(currentFilteredData[i].endTime),
-                            currentFilteredData[i].runningHours + ' hrs',
-                            formatNumber(currentFilteredData[i].fuelAdded) + ' L',
-                            (currentFilteredData[i].runningHours > 0 ? (currentFilteredData[i].fuelAdded / currentFilteredData[i].runningHours).toFixed(2) : '0.00') + ' L/hr',
-                            currentFilteredData[i].technician
-                        ]);
-                    }
-                    
-                    // Add table
-                    doc.autoTable({
-                        head: [['Generator ID', 'Date', 'Start Time', 'End Time', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
-                        body: tableData,
-                        startY: 70,
-                        theme: 'striped',
-                        styles: { fontSize: 10 },
-                        headStyles: { fillColor: [102, 126, 234] }
+                    const tableData = currentFilteredData.map(function(item) {
+                        return [
+                            item.generatorId,
+                            formatDate(item.date),
+                            item.runningHours + ' hrs',
+                            formatNumber(item.fuelAdded) + ' L',
+                            (item.runningHours > 0 ? (item.fuelAdded / item.runningHours).toFixed(2) : '0.00') + ' L/hr',
+                            item.technician
+                        ];
                     });
-                    
-                    // Add footer
-                    var pageCount = doc.internal.getNumberOfPages();
-                    for (var i = 1; i <= pageCount; i++) {
+
+                    // Add table using autoTable
+                    doc.autoTable({
+                        head: [['Generator ID', 'Date', 'Running Hours', 'Fuel Added (L)', 'Consumption (L/hr)', 'Technician']],
+                        body: tableData,
+                        startY: contentStartY + 50,
+                        theme: 'grid',
+                        headStyles: {
+                            fillColor: [44, 62, 80], // Dark Blue-Gray
+                            textColor: 255
+                        },
+                        styles: {
+                            fontSize: 9,
+                            cellPadding: 5
+                        },
+                        margin: { left: 40, right: 40 }
+                    });
+
+                    // Add framework to all pages
+                    const pageCount = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
                         doc.setPage(i);
-                        doc.setFontSize(8);
-                        doc.text('Page ' + i + ' of ' + pageCount, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 15, { align: 'center' });
-                        doc.text('Created By Aung Ye Hein', doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+                        drawPdfFramework(doc, 'Fuel Transaction Log', i, pageCount);
                     }
-                    
-                    // Save the PDF
-                    var dateStr = new Date().toISOString().slice(0, 10);
+
+                    const dateStr = new Date().toISOString().slice(0, 10);
                     doc.save('Generator_Fuel_Records_' + dateStr + '.pdf');
-                    
                     showNotification('PDF export completed', 'success');
                 });
 
